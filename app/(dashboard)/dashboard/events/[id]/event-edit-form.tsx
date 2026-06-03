@@ -105,6 +105,9 @@ export function EventEditForm({ sponsors, defaultValues, action }: EventEditForm
             <SelectItem value="other">อื่นๆ (Other)</SelectItem>
           </SelectContent>
         </Select>
+        {state.fieldErrors?.eventType && (
+          <p className="text-xs text-destructive">{state.fieldErrors.eventType[0]}</p>
+        )}
       </div>
 
       <IconField
