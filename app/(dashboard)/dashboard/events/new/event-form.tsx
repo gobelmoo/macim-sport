@@ -1,6 +1,8 @@
 'use client'
 
 import { useActionState } from 'react'
+import { Tag, User, MapPin, Building2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,11 +32,33 @@ type EventFormProps = {
   }
 }
 
+function IconField({
+  icon: Icon, label, id, name, type, defaultValue, placeholder, error,
+}: {
+  icon: LucideIcon; label: string; id: string; name: string
+  type?: string; defaultValue?: string; placeholder?: string; error?: string[]
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="relative">
+        <Icon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          id={id} name={name} type={type} className="pl-9"
+          defaultValue={defaultValue ?? ''} placeholder={placeholder}
+          aria-invalid={!!error}
+        />
+      </div>
+      {error && <p className="text-xs text-destructive">{error[0]}</p>}
+    </div>
+  )
+}
+
 export function EventForm({ sponsors, action, defaultValues }: EventFormProps) {
   const [state, formAction, isPending] = useActionState(action, {})
 
   return (
-    <form action={formAction} className="space-y-5 max-w-xl">
+    <form action={formAction} className="space-y-5">
       {state.error && (
         <p className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
           {state.error}
@@ -44,154 +68,93 @@ export function EventForm({ sponsors, action, defaultValues }: EventFormProps) {
       {/* Sponsor */}
       <div className="space-y-1.5">
         <Label htmlFor="sponsorId">Sponsor</Label>
-        <select
-          id="sponsorId"
-          name="sponsorId"
-          defaultValue={defaultValues?.sponsorId ?? ''}
-          className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-          required
-        >
-          <option value="" disabled>
-            เลือก Sponsor
-          </option>
-          {sponsors.map((s) => (
-            <option key={s.sponsorId} value={s.sponsorId}>
-              {s.sponsorName}
-            </option>
-          ))}
-        </select>
+        <Select name="sponsorId" defaultValue={defaultValues?.sponsorId ?? ''}>
+          <SelectTrigger id="sponsorId" className="w-full">
+            <SelectValue placeholder="เลือก Sponsor" />
+          </SelectTrigger>
+          <SelectContent>
+            {sponsors.map((s) => (
+              <SelectItem key={s.sponsorId} value={s.sponsorId}>
+                {s.sponsorName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {state.fieldErrors?.sponsorId && (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.sponsorId[0]}
-          </p>
+          <p className="text-xs text-destructive">{state.fieldErrors.sponsorId[0]}</p>
         )}
       </div>
 
-      {/* Event Name */}
-      <div className="space-y-1.5">
-        <Label htmlFor="eventName">ชื่องาน</Label>
-        <Input
-          id="eventName"
-          name="eventName"
-          defaultValue={defaultValues?.eventName}
-          placeholder="เช่น MACIM Run 2025"
-          required
-        />
-        {state.fieldErrors?.eventName && (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.eventName[0]}
-          </p>
-        )}
-      </div>
+      <IconField
+        icon={Tag} label="ชื่องาน" id="eventName" name="eventName"
+        defaultValue={defaultValues?.eventName} placeholder="เช่น MACIM Run 2025"
+        error={state.fieldErrors?.eventName}
+      />
 
-      {/* Organizer Name */}
-      <div className="space-y-1.5">
-        <Label htmlFor="organizerName">ชื่อผู้จัด</Label>
-        <Input
-          id="organizerName"
-          name="organizerName"
-          defaultValue={defaultValues?.organizerName}
-          placeholder="เช่น MACIM SPORT Co., Ltd."
-          required
-        />
-        {state.fieldErrors?.organizerName && (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.organizerName[0]}
-          </p>
-        )}
-      </div>
+      <IconField
+        icon={User} label="ชื่อผู้จัด" id="organizerName" name="organizerName"
+        defaultValue={defaultValues?.organizerName} placeholder="เช่น MACIM SPORT Co., Ltd."
+        error={state.fieldErrors?.organizerName}
+      />
 
       {/* Event Type */}
       <div className="space-y-1.5">
         <Label htmlFor="eventType">ประเภทกีฬา</Label>
-        <select
-          id="eventType"
-          name="eventType"
-          defaultValue={defaultValues?.eventType ?? 'run'}
-          className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <option value="run">วิ่ง (Run)</option>
-          <option value="triathlon">ไตรกีฬา (Triathlon)</option>
-          <option value="other">อื่นๆ (Other)</option>
-        </select>
+        <Select name="eventType" defaultValue={defaultValues?.eventType ?? 'run'}>
+          <SelectTrigger id="eventType" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="run">วิ่ง (Run)</SelectItem>
+            <SelectItem value="triathlon">ไตรกีฬา (Triathlon)</SelectItem>
+            <SelectItem value="other">อื่นๆ (Other)</SelectItem>
+          </SelectContent>
+        </Select>
         {state.fieldErrors?.eventType && (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.eventType[0]}
-          </p>
+          <p className="text-xs text-destructive">{state.fieldErrors.eventType[0]}</p>
         )}
       </div>
 
-      {/* Location */}
-      <div className="space-y-1.5">
-        <Label htmlFor="eventLocation">สถานที่จัดงาน</Label>
-        <Input
-          id="eventLocation"
-          name="eventLocation"
-          defaultValue={defaultValues?.eventLocation}
-          placeholder="เช่น สนามกีฬาแห่งชาติ"
-          required
-        />
-        {state.fieldErrors?.eventLocation && (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.eventLocation[0]}
-          </p>
-        )}
-      </div>
+      <IconField
+        icon={MapPin} label="สถานที่จัดงาน" id="eventLocation" name="eventLocation"
+        defaultValue={defaultValues?.eventLocation} placeholder="เช่น สนามกีฬาแห่งชาติ"
+        error={state.fieldErrors?.eventLocation}
+      />
 
-      {/* City */}
-      <div className="space-y-1.5">
-        <Label htmlFor="eventCity">เมือง / จังหวัด</Label>
-        <Input
-          id="eventCity"
-          name="eventCity"
-          defaultValue={defaultValues?.eventCity}
-          placeholder="เช่น กรุงเทพมหานคร"
-          required
-        />
-        {state.fieldErrors?.eventCity && (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.eventCity[0]}
-          </p>
-        )}
-      </div>
+      <IconField
+        icon={Building2} label="เมือง / จังหวัด" id="eventCity" name="eventCity"
+        defaultValue={defaultValues?.eventCity} placeholder="เช่น กรุงเทพมหานคร"
+        error={state.fieldErrors?.eventCity}
+      />
 
       {/* Dates */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="startDate">วันที่เริ่ม</Label>
-          <Input
-            id="startDate"
-            name="startDate"
-            type="date"
-            defaultValue={defaultValues?.startDate}
-            required
-          />
+          <Input id="startDate" name="startDate" type="date"
+            defaultValue={defaultValues?.startDate} required />
           {state.fieldErrors?.startDate && (
-            <p className="text-xs text-destructive">
-              {state.fieldErrors.startDate[0]}
-            </p>
+            <p className="text-xs text-destructive">{state.fieldErrors.startDate[0]}</p>
           )}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="endDate">วันที่สิ้นสุด</Label>
-          <Input
-            id="endDate"
-            name="endDate"
-            type="date"
-            defaultValue={defaultValues?.endDate}
-            required
-          />
+          <Input id="endDate" name="endDate" type="date"
+            defaultValue={defaultValues?.endDate} required />
           {state.fieldErrors?.endDate && (
-            <p className="text-xs text-destructive">
-              {state.fieldErrors.endDate[0]}
-            </p>
+            <p className="text-xs text-destructive">{state.fieldErrors.endDate[0]}</p>
           )}
         </div>
       </div>
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'กำลังบันทึก...' : 'บันทึก'}
-      </Button>
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? 'กำลังบันทึก...' : 'สร้าง Event'}
+        </Button>
+        <Button variant="outline" asChild>
+          <a href="/dashboard/events">ยกเลิก</a>
+        </Button>
+      </div>
     </form>
   )
 }
