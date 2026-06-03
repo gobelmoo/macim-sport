@@ -128,3 +128,15 @@ export async function disableUser(
 
   return row
 }
+
+export async function enableUser(
+  userId: string,
+): Promise<{ userId: string }> {
+  const [row] = await db
+    .update(users)
+    .set({ status: 'active' })
+    .where(eq(users.userId, userId))
+    .returning({ userId: users.userId })
+
+  return row
+}
