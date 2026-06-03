@@ -1,41 +1,19 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { format } from 'date-fns'
+import { Users, UserPlus } from 'lucide-react'
 import { auth } from '@/auth'
 import { listUsers } from '@/db/queries/users'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { canManageUsers, ROLE_LABELS, type UserRole } from '@/lib/rbac'
-
-const ROLE_VARIANT: Record<
-  UserRole,
-  'default' | 'secondary' | 'outline' | 'destructive'
-> = {
-  super_admin_owner: 'default',
-  super_admin_manager: 'default',
-  super_admin_viewer: 'secondary',
-  sponsor_admin: 'secondary',
-  sponsor_staff: 'outline',
-}
+import { canManageUsers } from '@/lib/rbac'
+import { UsersTable } from './_components/users-table'
 
 export default async function UsersPage() {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
   const { role, sponsorId, permissions } = session.user
-
   const canCreate = canManageUsers({ role, permissions })
 
-  // sponsor_admin must always see only their own users; if sponsorId is somehow
-  // null, return nothing rather than leaking all users.
   const filterOpts =
     role === 'sponsor_admin'
       ? { sponsorId: sponsorId ?? '__none__' }
@@ -46,73 +24,28 @@ export default async function UsersPage() {
   return (
     <main className="p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">จัดการผู้ใช้</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {role === 'sponsor_admin'
-              ? 'รายชื่อผู้ใช้ใน Sponsor ของท่าน'
-              : 'รายชื่อผู้ใช้ทั้งหมดในระบบ'}
-          </p>
+        <div className="flex items-center gap-3">
+          <Users className="size-5 text-muted-foreground" />
+          <div>
+            <h1 className="text-2xl font-semibold">จัดการผู้ใช้</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {role === 'sponsor_admin'
+                ? 'รายชื่อผู้ใช้ใน Sponsor ของท่าน'
+                : 'รายชื่อผู้ใช้ทั้งหมดในระบบ'}
+            </p>
+          </div>
         </div>
         {canCreate && (
           <Button asChild>
-            <Link href="/dashboard/users/new">สร้างผู้ใช้</Link>
+            <Link href="/dashboard/users/new">
+              <UserPlus className="size-4" />
+              สร้างผู้ใช้
+            </Link>
           </Button>
         )}
       </div>
 
-      {users.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-          ยังไม่มีผู้ใช้
-        </div>
-      ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>อีเมล</TableHead>
-                <TableHead>บทบาท</TableHead>
-                <TableHead>Sponsor</TableHead>
-                <TableHead>สถานะ</TableHead>
-                <TableHead>วันที่สร้าง</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.userId}>
-                  <TableCell className="font-medium">{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={ROLE_VARIANT[user.role]}>
-                      {ROLE_LABELS[user.role]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {user.sponsorName ?? '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        user.status === 'active' ? 'secondary' : 'destructive'
-                      }
-                    >
-                      {user.status === 'active' ? 'ใช้งาน' : 'ปิดใช้งาน'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {format(user.createdAt, 'dd/MM/yyyy')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dashboard/users/${user.userId}`}>แก้ไข</Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <UsersTable users={users} />
     </main>
   )
 }
