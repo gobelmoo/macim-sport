@@ -9,6 +9,7 @@ import { canManageUsers, isMacimAdmin, type UserRole } from '@/lib/rbac'
 import {
   createUser,
   disableUser,
+  enableUser,
   getUser,
   updateUser,
 } from '@/db/queries/users'
@@ -235,6 +236,37 @@ export async function disableUserAction(
   }
 
   await disableUser(userId)
+
+  revalidatePath('/dashboard/users')
+  revalidatePath(`/dashboard/users/${userId}`)
+  return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// enableUserAction
+// ---------------------------------------------------------------------------
+
+export async function enableUserAction(
+  userId: string,
+  _prevState: UserActionState,
+  _formData?: FormData,
+): Promise<UserActionState> {
+  const session = await auth()
+  if (!session?.user) return { error: 'ไม่ได้เข้าสู่ระบบ' }
+
+  if (!canManageUsers(session.user)) {
+    return { error: 'ไม่มีสิทธิ์เปิดใช้งานผู้ใช้' }
+  }
+
+  if (session.user.role === 'sponsor_admin') {
+    const target = await getUser(userId)
+    if (!target) return { error: 'ไม่พบผู้ใช้' }
+    if (target.sponsorId !== session.user.sponsorId) {
+      return { error: 'ไม่มีสิทธิ์เปิดใช้งานผู้ใช้นี้' }
+    }
+  }
+
+  await enableUser(userId)
 
   revalidatePath('/dashboard/users')
   revalidatePath(`/dashboard/users/${userId}`)
