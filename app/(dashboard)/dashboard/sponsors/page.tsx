@@ -23,11 +23,13 @@ const SERVICE_TYPE_LABEL: Record<string, string> = {
 const STATUS_LABEL: Record<string, string> = {
   active: 'ใช้งาน',
   inactive: 'ไม่ใช้งาน',
+  hidden: 'ไม่ใช้งาน',
 }
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   active: 'default',
   inactive: 'outline',
+  hidden: 'outline',
 }
 
 
