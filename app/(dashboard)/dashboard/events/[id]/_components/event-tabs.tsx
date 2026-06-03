@@ -9,23 +9,18 @@ import {
 } from '@/components/ui/tabs'
 
 interface EventTabsProps {
-  infoContent: React.ReactNode
   stationsContent: React.ReactNode
   athletesContent: React.ReactNode
 }
 
-export function EventTabs({
-  infoContent,
-  stationsContent,
-  athletesContent,
-}: EventTabsProps) {
+export function EventTabs({ stationsContent, athletesContent }: EventTabsProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const activeTab = searchParams.get('tab') ?? 'info'
+  const activeTab = searchParams.get('tab') ?? 'stations'
 
   function handleTabChange(value: string) {
     const params = new URLSearchParams(searchParams.toString())
-    if (value === 'info') {
+    if (value === 'stations') {
       params.delete('tab')
     } else {
       params.set('tab', value)
@@ -37,11 +32,9 @@ export function EventTabs({
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList className="mb-6">
-        <TabsTrigger value="info">ข้อมูล</TabsTrigger>
         <TabsTrigger value="stations">Stations</TabsTrigger>
         <TabsTrigger value="athletes">นักกีฬา</TabsTrigger>
       </TabsList>
-      <TabsContent value="info">{infoContent}</TabsContent>
       <TabsContent value="stations">{stationsContent}</TabsContent>
       <TabsContent value="athletes">{athletesContent}</TabsContent>
     </Tabs>

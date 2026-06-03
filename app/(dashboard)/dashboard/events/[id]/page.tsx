@@ -23,7 +23,7 @@ import {
 import { StatusButtons } from './status-buttons'
 import { DeleteEventButton } from './delete-event-button'
 import { EventTabs } from './_components/event-tabs'
-import { StationForm } from './stations/station-form'
+import { AddStationDialog } from './stations/add-station-dialog'
 import { ToggleStationButton } from './stations/toggle-station-button'
 import { DeleteStationButton } from './stations/delete-station-button'
 import { EditStationDialog } from './stations/edit-station-dialog'
@@ -137,9 +137,14 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
 
   const stationsContent = (
     <div className="space-y-4">
+      {canFullEdit && (
+        <div className="flex justify-end">
+          <AddStationDialog action={boundCreateStation} />
+        </div>
+      )}
       {stationList.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
-          ยังไม่มี Station — เพิ่ม Station แรกด้านล่าง
+          ยังไม่มี Station
         </div>
       ) : (
         <div className="rounded-lg border">
@@ -200,17 +205,6 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
             </TableBody>
           </Table>
         </div>
-      )}
-
-      {canFullEdit && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">เพิ่ม Station ใหม่</CardTitle>
-          </CardHeader>
-          <CardContent className="max-w-lg">
-            <StationForm action={boundCreateStation} />
-          </CardContent>
-        </Card>
       )}
     </div>
   )
@@ -319,10 +313,12 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
+      {/* Info — always visible */}
+      <div className="mb-6">{infoContent}</div>
+
+      {/* Tabs: Stations + Athletes */}
       <Suspense fallback={null}>
         <EventTabs
-          infoContent={infoContent}
           stationsContent={stationsContent}
           athletesContent={athletesContent}
         />
