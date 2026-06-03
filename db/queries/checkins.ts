@@ -37,7 +37,7 @@ export type StationRow = {
   stationId: string
   eventId: string
   stationName: string
-  status: 'active' | 'hidden'
+  status: 'active' | 'inactive'
 }
 
 export type EventWithStations = ActiveEventRow & {

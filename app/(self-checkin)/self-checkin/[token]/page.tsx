@@ -19,7 +19,7 @@ export default async function SelfCheckinPage({ params }: Props) {
   if (!payload) notFound()
 
   const [eventRow, stationRow] = await Promise.all([
-    db.select({ eventName: events.eventName })
+    db.select({ eventName: events.eventName, status: events.status })
       .from(events)
       .where(eq(events.eventId, payload.eventId))
       .limit(1)
@@ -32,6 +32,7 @@ export default async function SelfCheckinPage({ params }: Props) {
   ])
 
   if (!eventRow || !stationRow) notFound()
+  if (eventRow.status !== 'active') notFound()
   if (stationRow.status !== 'active') notFound()
 
   return (

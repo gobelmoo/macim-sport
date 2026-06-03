@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS, ROLES } from '@/lib/rbac'
 import { getEvent } from '@/db/queries/events'
@@ -15,9 +16,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { signStationToken } from '@/lib/station-token'
-import { createStationAction } from '../actions'
+import { createStationAction, updateStationAction } from '../actions'
 import { StationForm } from './station-form'
-import { HideStationButton } from './hide-station-button'
+import { ToggleStationButton } from './toggle-station-button'
+import { DeleteStationButton } from './delete-station-button'
+import { EditStationDialog } from './edit-station-dialog'
 import { StationQrButton } from './_components/station-qr-button'
 
 const STATION_TYPE_LABEL: Record<string, string> = {
@@ -26,10 +29,7 @@ const STATION_TYPE_LABEL: Record<string, string> = {
   other: 'อื่นๆ',
 }
 
-const STATION_TYPE_VARIANT: Record<
-  string,
-  'default' | 'secondary' | 'outline'
-> = {
+const STATION_TYPE_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
   air_recovery: 'default',
   ice_bath: 'secondary',
   other: 'outline',
@@ -50,37 +50,37 @@ export default async function StationsPage({ params }: Props) {
 
   const canViewAll = canAccess(PERMISSIONS.EVENT_VIEW, authz)
   const canViewOwn = canAccess(PERMISSIONS.EVENT_VIEW_OWN, authz)
-
   if (!canViewAll && !canViewOwn) redirect('/dashboard')
 
   const event = await getEvent(id)
   if (!event) notFound()
 
-  if (canViewOwn && !canViewAll && event.sponsorId !== userSponsorId) {
-    notFound()
-  }
+  if (canViewOwn && !canViewAll && event.sponsorId !== userSponsorId) notFound()
 
   const stationList = await listStations(id)
-  const activeStations = stationList.filter((s) => s.status === 'active')
 
-  // Generate self-checkin tokens for all active stations
-  const vercelUrl = process.env.VERCEL_URL
-  const baseUrl = vercelUrl ? `https://${vercelUrl}` : (process.env.NEXTAUTH_URL ?? 'http://localhost:3000')
-  const stationTokens = await Promise.all(
+  // QR tokens สำหรับ station ที่ active เท่านั้น
+  const activeStations = stationList.filter((s) => s.status === 'active')
+  const headersList = await headers()
+  const host = headersList.get('host') ?? 'localhost:3000'
+  const protocol = host.startsWith('localhost') ? 'http' : 'https'
+  const baseUrl = `${protocol}://${host}`
+  const stationTokenEntries = await Promise.all(
     activeStations.map(async (s) => {
       const token = await signStationToken({ stationId: s.stationId, eventId: id })
-      return { stationId: s.stationId, url: `${baseUrl}/self-checkin/${token}` }
-    })
+      return [s.stationId, `${baseUrl}/self-checkin/${token}`] as const
+    }),
   )
+  const stationTokenMap = new Map(stationTokenEntries)
 
-  const canManage =
-    role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
+  const canManage = role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
+  // event ไม่ active → แก้ไข / ลบ / เพิ่มได้
+  const canFullEdit = canManage && event.status !== 'active'
 
   const boundCreateStation = createStationAction.bind(null, id)
 
   return (
     <main className="p-6 lg:p-8">
-      {/* Header */}
       <div className="mb-2 flex items-center gap-2">
         <Link
           href={`/dashboard/events/${id}`}
@@ -98,8 +98,7 @@ export default async function StationsPage({ params }: Props) {
         </Button>
       </div>
 
-      {/* Station List */}
-      {activeStations.length === 0 ? (
+      {stationList.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground mb-8">
           ยังไม่มี Station — เพิ่ม Station แรกด้านล่าง
         </div>
@@ -113,63 +112,84 @@ export default async function StationsPage({ params }: Props) {
                 <TableHead>Stamp เมื่อ Add Friend</TableHead>
                 <TableHead>สถานะ</TableHead>
                 <TableHead className="text-right">Self Check-in</TableHead>
-                {canManage && <TableHead className="text-right">การดำเนินการ</TableHead>}
+                {canManage && (
+                  <TableHead className="text-right">การดำเนินการ</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeStations.map((station) => (
-                <TableRow key={station.stationId}>
-                  <TableCell className="font-medium">
-                    {station.stationName}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        STATION_TYPE_VARIANT[station.stationType] ?? 'outline'
-                      }
-                    >
-                      {STATION_TYPE_LABEL[station.stationType] ??
-                        station.stationType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {station.stampOnAddFriend ? (
-                      <Badge variant="secondary">เปิดใช้งาน</Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{station.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {(() => {
-                      const t = stationTokens.find(t => t.stationId === station.stationId)
-                      return t ? (
+              {stationList.map((station) => {
+                const boundUpdateStation = updateStationAction.bind(
+                  null,
+                  station.stationId,
+                  id,
+                )
+                return (
+                  <TableRow
+                    key={station.stationId}
+                    className={station.status === 'inactive' ? 'opacity-50' : undefined}
+                  >
+                    <TableCell className="font-medium">
+                      {station.stationName}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={STATION_TYPE_VARIANT[station.stationType] ?? 'outline'}>
+                        {STATION_TYPE_LABEL[station.stationType] ?? station.stationType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {station.stampOnAddFriend ? (
+                        <Badge variant="secondary">เปิดใช้งาน</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={station.status === 'active' ? 'default' : 'outline'}>
+                        {station.status === 'active' ? 'ใช้งาน' : 'ปิดใช้งาน'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {stationTokenMap.has(station.stationId) && (
                         <StationQrButton
                           stationName={station.stationName}
-                          selfCheckinUrl={t.url}
+                          selfCheckinUrl={stationTokenMap.get(station.stationId)!}
                         />
-                      ) : null
-                    })()}
-                  </TableCell>
-                  {canManage && (
-                    <TableCell className="text-right">
-                      <HideStationButton
-                        stationId={station.stationId}
-                        eventId={id}
-                      />
+                      )}
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    {canManage && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <ToggleStationButton
+                            stationId={station.stationId}
+                            eventId={id}
+                            currentStatus={station.status}
+                          />
+                          {canFullEdit && (
+                            <>
+                              <EditStationDialog
+                                station={station}
+                                action={boundUpdateStation}
+                              />
+                              <DeleteStationButton
+                                stationId={station.stationId}
+                                eventId={id}
+                                stationName={station.stationName}
+                              />
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {/* Add Station Form */}
-      {canManage && (
+      {canFullEdit && (
         <div className="rounded-lg border p-6 max-w-lg">
           <h2 className="text-lg font-medium mb-5">เพิ่ม Station ใหม่</h2>
           <StationForm action={boundCreateStation} />

@@ -2,7 +2,6 @@ import {
   Activity,
   CalendarDays,
   Home,
-  MapPin,
   BarChart3,
   Building2,
   Users,
@@ -44,13 +43,7 @@ export const NAV: NavGroup[] = [
         icon: CalendarDays,
         anyOf: ['event:view', 'event:view_own'],
       },
-      {
-        title: 'Station',
-        href: '/dashboard/stations',
-        icon: MapPin,
-        anyOf: ['station:manage'],
-      },
-      {
+{
         title: 'นักกีฬา',
         href: '/dashboard/athletes',
         icon: Activity,

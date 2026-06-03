@@ -5,15 +5,18 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { ROLES } from '@/lib/rbac'
-import { updateEvent, updateEventStatus } from '@/db/queries/events'
+import { deleteDraftEvent, updateEvent, updateEventStatus } from '@/db/queries/events'
 import {
   createStation,
+  deleteStation,
+  toggleStationStatus,
   updateStation,
-  hideStation,
 } from '@/db/queries/stations'
 import type { eventStatusEnum } from '@/db/schema/events'
+import type { stationStatusEnum } from '@/db/schema/stations'
 
 export type ActionState = {
+  success?: boolean
   error?: string
   fieldErrors?: Record<string, string[]>
 }
@@ -124,14 +127,32 @@ export async function updateStationAction(
 
   await updateStation(stationId, parsed.data)
   revalidatePath(`/dashboard/events/${eventId}/stations`)
-  return {}
+  return { success: true }
 }
 
-export async function hideStationAction(
+export async function toggleStationStatusAction(
+  stationId: string,
+  eventId: string,
+  currentStatus: (typeof stationStatusEnum.enumValues)[number],
+): Promise<void> {
+  await assertOwnerOrManager()
+  await toggleStationStatus(stationId, currentStatus)
+  revalidatePath(`/dashboard/events/${eventId}/stations`)
+}
+
+export async function deleteStationAction(
   stationId: string,
   eventId: string,
 ): Promise<void> {
   await assertOwnerOrManager()
-  await hideStation(stationId)
+  await deleteStation(stationId)
   revalidatePath(`/dashboard/events/${eventId}/stations`)
+}
+
+export async function deleteEventAction(eventId: string): Promise<void> {
+  await assertOwnerOrManager()
+  const deleted = await deleteDraftEvent(eventId)
+  if (!deleted) throw new Error('ลบไม่ได้ — event ไม่ใช่ draft หรือไม่พบ')
+  revalidatePath('/dashboard/events')
+  redirect('/dashboard/events')
 }

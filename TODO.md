@@ -134,27 +134,89 @@
 
 ---
 
-## Phase 9: Environment + Deploy
+## Phase 8.5: Self Check-in via QR + OCR ✅
 
-- [ ] สร้าง `.env.example`
-  ```
-  DATABASE_URL=
-  AUTH_SECRET=
-  AUTH_URL=http://localhost:3000
-  ```
-- [ ] สร้าง `.env.local` จาก `.env.example`
-- [ ] ตั้งค่า Vercel project + link
-- [ ] ตั้งค่า env vars ใน Vercel
-- [ ] deploy preview build ครั้งแรก
+นักกีฬา scan QR จากบูธ → เปิดหน้าใน browser → OCR สแกน BIB เอง → check-in
+
+- [x] `lib/station-token.ts` — sign/verify JWT (HS256 + AUTH_SECRET) แบบ stateless
+- [x] `app/(dashboard)/dashboard/events/[id]/stations/` — เพิ่มปุ่ม QR Code ต่อ station
+- [x] `app/(dashboard)/dashboard/events/[id]/stations/_components/station-qr-button.tsx` — modal แสดง QR + copy URL
+- [x] `app/(self-checkin)/self-checkin/[token]/page.tsx` — public route, verify token + เช็ค event/station active
+- [x] `app/(self-checkin)/self-checkin/[token]/_components/ocr-terminal.tsx` — Tesseract.js OCR, scan BIB จากกล้อง
+- [x] `app/(self-checkin)/self-checkin/[token]/actions.ts` — performSelfCheckin (verify token → executeCheckin)
+- [x] `lib/checkin-core.ts` — executeCheckin shared logic (ใช้ทั้ง station + self check-in)
+- [x] `app/_components/checkin-result-card.tsx` — shared result card
+- [x] `auth.config.ts` — whitelist `/self-checkin/*` เป็น public route
+- [x] deploy + verify production
+
+---
+
+## Phase 9: Environment + Deploy ✅
+
+- [x] สร้าง `.env.example`
+- [x] สร้าง `.env.local` จาก `.env.example`
+- [x] `git init` + initial commit (main branch, 122 files)
+- [x] ตั้งค่า Vercel project + link → `widelynexts-projects/macim-sport`
+- [x] ตั้งค่า env vars ใน Vercel (DATABASE_URL, AUTH_SECRET — production)
+- [x] deploy production build → https://macim-sport.vercel.app
 
 ---
 
 ## Phase 10: Verify
 
-- [ ] login ด้วย owner account ได้
-- [ ] owner สร้าง manager ได้
-- [ ] manager สร้าง sponsor_admin ได้
-- [ ] sponsor_admin สร้าง sponsor_staff ได้
-- [ ] sponsor_staff เข้าได้แค่หน้า `/checkin` เท่านั้น
-- [ ] viewer เข้า `/dashboard/reports` ได้ แต่เข้า `/dashboard/sponsors` ไม่ได้
-- [ ] Check-in flow ครบ 3 กรณี (พบ / ไม่พบ / ลงทะเบียนทันที)
+- [x] login ด้วย owner account ได้
+- [x] owner สร้าง manager ได้
+- [x] manager สร้าง sponsor_admin ได้
+- [x] sponsor_admin สร้าง sponsor_staff ได้
+- [x] sponsor_staff เข้าได้แค่หน้า `/checkin` เท่านั้น
+- [x] viewer เข้า `/dashboard/reports` ได้ แต่เข้า `/dashboard/sponsors` ไม่ได้
+- [x] Check-in flow ครบ 3 กรณี (พบ / ไม่พบ / ลงทะเบียนทันที)
+
+---
+
+## Phase 11: LINE Self-Registration (Hybrid Webhook + LIFF)
+
+นักกีฬาลงทะเบียนเองผ่าน LINE OA — รองรับ 3 flows: new member, existing member, imported member
+
+### Setup (ทำก่อน)
+- [ ] สร้าง LINE Messaging API Channel + เปิด webhook URL `/api/line/webhook`
+- [ ] สร้าง LINE Login Channel + LIFF App (URL = `/register/[eventId]`)
+- [ ] เพิ่ม env vars: `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LIFF_ID`
+
+### DB Migration
+- [ ] `events` table: เพิ่ม `bibStart` (integer), `bibEnd` (integer)
+- [ ] สร้าง `athlete_consents` table: `athleteId`, `consentVersion`, `pdpaAccepted`, `marketingAccepted`, `consentedAt`
+- [ ] สร้าง `line_sessions` table: `lineUserId`, `state` (enum), `eventId`, `bibNumber`, `updatedAt`
+- [ ] `pnpm db:generate` + apply migration
+
+### Webhook
+- [ ] สร้าง `POST /api/line/webhook` — verify signature + route events (follow / message / postback)
+- [ ] `handleFollow` — เช็ค LINE ID ในระบบ → ส่ง welcome new หรือ welcome back
+- [ ] `handleMessage` — state = awaiting_bib → validate BIB (pool / ซ้ำ / มี record ไม่มี LINE ID)
+- [ ] `handlePostback` — consent:accept/decline, confirm_record:yes/no
+
+### Flex Messages (`lib/line-messages.ts`)
+- [ ] `welcomeNewFlex()` — ยินดีต้อนรับ + [ลงทะเบียน]
+- [ ] `welcomeBackFlex(firstName, bib)` — welcome back + [ลงทะเบียนงานใหม่]
+- [ ] `consentFlex()` — PDPA summary + [ยอมรับ] [ไม่ยอมรับ] postback
+- [ ] `confirmRecordFlex(firstName, lastName, dob)` — [ใช่คือฉัน] [ไม่ใช่] postback
+- [ ] `successFlex(firstName, bib, eventName)` — ลงทะเบียนสำเร็จ ✓
+- [ ] `errorMessage(type)` — BIB ไม่พบ / ถูกใช้แล้ว / consent declined
+
+### LIFF Page
+- [ ] สร้าง route `(register)/register/[eventId]/page.tsx` — public, ไม่ต้อง auth
+- [ ] `liff.init()` + `liff.getProfile()` → pre-fill ชื่อ
+- [ ] Form: ชื่อ / นามสกุล / วันเกิด (date picker) / เพศ — pre-fill ถ้ามี record เดิม
+- [ ] Server action `registerViaLine` — สร้าง athlete + registration + ผูก LINE ID
+- [ ] Server action `linkLineId` — ผูก LINE ID กับ record ที่ import ไว้แล้ว
+- [ ] Server action `recordConsent` — บันทึก consent version `"2025-v1"`
+
+### Dashboard
+- [ ] Event form: เพิ่ม field `bibStart` / `bibEnd`
+- [ ] Event detail page: เพิ่มปุ่ม "คัดลอก Registration Link" (LINE LIFF URL)
+
+### Test
+- [ ] Flow 1: New member — Add OA → BIB → consent → LIFF form → success
+- [ ] Flow 2: Existing member — Add OA → welcome back → BIB ใหม่ → skip consent → pre-filled LIFF → success
+- [ ] Flow 3: Imported member — BIB → confirm record → ผูก LINE ID → success
+- [ ] Edge cases: BIB นอก pool, BIB ถูกใช้แล้ว, กด consent decline

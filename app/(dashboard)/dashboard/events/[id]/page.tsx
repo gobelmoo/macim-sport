@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { updateEventAction } from './actions'
 import { EventEditForm } from './event-edit-form'
 import { StatusButtons } from './status-buttons'
+import { DeleteEventButton } from './delete-event-button'
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
   run: 'วิ่ง',
@@ -88,6 +89,9 @@ export default async function EventDetailPage({ params }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
+          {canEdit && event.status === 'draft' && (
+            <DeleteEventButton eventId={event.eventId} />
+          )}
           {canEdit && (
             <StatusButtons eventId={event.eventId} currentStatus={event.status} />
           )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,14 +14,20 @@ type StationFormProps = {
     stampOnAddFriend?: boolean
   }
   submitLabel?: string
+  onSuccess?: () => void
 }
 
 export function StationForm({
   action,
   defaultValues,
   submitLabel = 'เพิ่ม Station',
+  onSuccess,
 }: StationFormProps) {
   const [state, formAction, isPending] = useActionState(action, {})
+
+  useEffect(() => {
+    if (state.success) onSuccess?.()
+  }, [state.success, onSuccess])
 
   return (
     <form action={formAction} className="space-y-4">

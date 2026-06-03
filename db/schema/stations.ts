@@ -1,5 +1,5 @@
 import { boolean, pgEnum, pgTable, text } from 'drizzle-orm/pg-core'
-import { createdAtColumn, idColumn, statusEnum } from './_common'
+import { createdAtColumn, idColumn } from './_common'
 import { events } from './events'
 
 export const stationTypeEnum = pgEnum('station_type', [
@@ -7,6 +7,8 @@ export const stationTypeEnum = pgEnum('station_type', [
   'ice_bath',
   'other',
 ])
+
+export const stationStatusEnum = pgEnum('station_status', ['active', 'inactive'])
 
 export const stations = pgTable('stations', {
   stationId: idColumn(),
@@ -16,6 +18,6 @@ export const stations = pgTable('stations', {
   stationType: stationTypeEnum().notNull(),
   stationName: text().notNull(),
   stampOnAddFriend: boolean().default(false).notNull(),
-  status: statusEnum().default('active').notNull(),
+  status: stationStatusEnum().default('active').notNull(),
   createdAt: createdAtColumn(),
 })

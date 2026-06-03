@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { stations } from '@/db/schema/stations'
-import type { stationTypeEnum } from '@/db/schema/stations'
+import type { stationStatusEnum, stationTypeEnum } from '@/db/schema/stations'
 
 export type StationRow = {
   stationId: string
@@ -9,7 +9,7 @@ export type StationRow = {
   stationType: (typeof stationTypeEnum.enumValues)[number]
   stationName: string
   stampOnAddFriend: boolean
-  status: 'active' | 'hidden'
+  status: (typeof stationStatusEnum.enumValues)[number]
   createdAt: Date
 }
 
@@ -30,9 +30,7 @@ export async function listStations(eventId: string): Promise<StationRow[]> {
     .orderBy(stations.createdAt)
 }
 
-export async function getStation(
-  stationId: string,
-): Promise<StationRow | undefined> {
+export async function getStation(stationId: string): Promise<StationRow | undefined> {
   const [row] = await db
     .select()
     .from(stations)
@@ -42,9 +40,7 @@ export async function getStation(
   return row
 }
 
-export async function createStation(
-  data: CreateStationData,
-): Promise<{ stationId: string }> {
+export async function createStation(data: CreateStationData): Promise<{ stationId: string }> {
   const [row] = await db
     .insert(stations)
     .values(data)
@@ -66,14 +62,20 @@ export async function updateStation(
   return row
 }
 
-export async function hideStation(
+export async function toggleStationStatus(
   stationId: string,
+  currentStatus: (typeof stationStatusEnum.enumValues)[number],
 ): Promise<{ stationId: string }> {
+  const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
   const [row] = await db
     .update(stations)
-    .set({ status: 'hidden' })
+    .set({ status: nextStatus })
     .where(eq(stations.stationId, stationId))
     .returning({ stationId: stations.stationId })
 
   return row
+}
+
+export async function deleteStation(stationId: string): Promise<void> {
+  await db.delete(stations).where(eq(stations.stationId, stationId))
 }

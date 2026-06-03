@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { events } from '@/db/schema/events'
 import { sponsors } from '@/db/schema/sponsors'
@@ -121,4 +121,13 @@ export async function updateEventStatus(
     .returning({ eventId: events.eventId })
 
   return row
+}
+
+export async function deleteDraftEvent(eventId: string): Promise<boolean> {
+  const [row] = await db
+    .delete(events)
+    .where(and(eq(events.eventId, eventId), eq(events.status, 'draft')))
+    .returning({ eventId: events.eventId })
+
+  return !!row
 }

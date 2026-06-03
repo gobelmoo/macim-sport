@@ -3,6 +3,13 @@
 import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 
 interface Props {
   stationName: string
@@ -11,6 +18,17 @@ interface Props {
 
 export function StationQrButton({ stationName, selfCheckinUrl }: Props) {
   const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(selfCheckinUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // clipboard unavailable — silently ignore
+    }
+  }
 
   return (
     <>
@@ -18,45 +36,26 @@ export function StationQrButton({ stationName, selfCheckinUrl }: Props) {
         QR Code
       </Button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-background p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="mb-1 text-center text-lg font-semibold">{stationName}</h2>
-            <p className="mb-5 text-center text-sm text-muted-foreground">
-              นักกีฬาสแกน QR เพื่อ Self Check-in
-            </p>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{stationName}</DialogTitle>
+            <DialogDescription>นักกีฬาสแกน QR เพื่อ Self Check-in</DialogDescription>
+          </DialogHeader>
 
-            <div className="flex justify-center">
-              <QRCodeSVG value={selfCheckinUrl} size={220} level="M" />
-            </div>
-
-            <p className="mt-4 break-all text-center text-xs text-muted-foreground">
-              {selfCheckinUrl}
-            </p>
-
-            <div className="mt-5 flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(selfCheckinUrl)
-                }}
-              >
-                คัดลอก URL
-              </Button>
-              <Button className="flex-1" onClick={() => setOpen(false)}>
-                ปิด
-              </Button>
-            </div>
+          <div className="flex justify-center py-2">
+            <QRCodeSVG value={selfCheckinUrl} size={220} level="M" />
           </div>
-        </div>
-      )}
+
+          <p className="break-all text-center text-xs text-muted-foreground">
+            {selfCheckinUrl}
+          </p>
+
+          <Button variant="outline" className="w-full" onClick={handleCopy}>
+            {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอก URL'}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

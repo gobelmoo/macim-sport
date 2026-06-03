@@ -22,7 +22,7 @@ export async function verifyStationToken(token: string): Promise<StationTokenPay
   try {
     const { payload } = await jwtVerify<StationTokenPayload>(token, getSecret())
     if (!payload.stationId || !payload.eventId) return null
-    return { stationId: payload.stationId, eventId: payload.eventId }
+    return payload
   } catch {
     return null
   }
