@@ -76,17 +76,20 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
     headers(),
   ])
 
-  const activeStations = stationList.filter((s) => s.status === 'active')
   const host = headersList.get('host') ?? 'localhost:3000'
   const protocol = host.startsWith('localhost') ? 'http' : 'https'
   const baseUrl = `${protocol}://${host}`
-  const stationTokenEntries = await Promise.all(
-    activeStations.map(async (s) => {
-      const token = await signStationToken({ stationId: s.stationId, eventId: id })
-      return [s.stationId, `${baseUrl}/self-checkin/${token}`] as const
-    }),
-  )
-  const stationTokenMap = new Map(stationTokenEntries)
+  // Only generate QR tokens when event is active — self-checkin page enforces the same check
+  const stationTokenMap = new Map<string, string>()
+  if (event.status === 'active') {
+    const activeStations = stationList.filter((s) => s.status === 'active')
+    await Promise.all(
+      activeStations.map(async (s) => {
+        const token = await signStationToken({ stationId: s.stationId, eventId: id })
+        stationTokenMap.set(s.stationId, `${baseUrl}/self-checkin/${token}`)
+      }),
+    )
+  }
 
   const boundCreateStation = createStationAction.bind(null, id)
 
