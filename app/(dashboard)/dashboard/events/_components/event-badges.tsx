@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import type { eventStatusEnum, eventTypeEnum } from '@/db/schema/events'
 
 type EventStatus = (typeof eventStatusEnum.enumValues)[number]
@@ -38,7 +39,7 @@ export function EventStatusBadge({ status }: { status: string }) {
   if (!cfg) return <Badge variant="outline">{status}</Badge>
   const Icon = cfg.icon
   return (
-    <Badge variant={cfg.variant} className={`gap-1 ${cfg.className ?? ''}`}>
+    <Badge variant={cfg.variant} className={cn('gap-1', cfg.className)}>
       <Icon className="size-3" />
       {cfg.label}
     </Badge>
