@@ -11,7 +11,7 @@ export default async function NewEventPage() {
 
   const { role } = session.user
   if (role !== ROLES.SUPER_ADMIN_OWNER && role !== ROLES.SUPER_ADMIN_MANAGER) {
-    redirect('/events')
+    redirect('/dashboard/events')
   }
 
   const sponsorList = await listSponsors()

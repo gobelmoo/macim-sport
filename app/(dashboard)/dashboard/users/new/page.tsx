@@ -15,7 +15,7 @@ export default async function NewUserPage() {
     permissions.includes('user:manage') ||
     permissions.includes('user:manage_staff')
 
-  if (!canCreate) redirect('/users')
+  if (!canCreate) redirect('/dashboard/users')
 
   // Sponsors list needed for owner/manager
   let sponsors: Pick<SponsorRow, 'sponsorId' | 'sponsorName'>[] = []

@@ -1,0 +1,2288 @@
+{
+  "id": "95df0d94-891f-4a73-8f69-451aa9cb92e3",
+  "prevId": "d7713c05-b4ce-494d-b1f0-e82af99d6b9e",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.athlete_event_registrations": {
+      "name": "athlete_event_registrations",
+      "schema": "",
+      "columns": {
+        "registrationId": {
+          "name": "registrationId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bibNumber": {
+          "name": "bibNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profileImageUrl": {
+          "name": "profileImageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registeredAt": {
+          "name": "registeredAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        }
+      },
+      "indexes": {
+        "aer_event_id_idx": {
+          "name": "aer_event_id_idx",
+          "columns": [
+            {
+              "expression": "eventId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "athlete_event_registrations_athleteId_athletes_athleteId_fk": {
+          "name": "athlete_event_registrations_athleteId_athletes_athleteId_fk",
+          "tableFrom": "athlete_event_registrations",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "athlete_event_registrations_eventId_events_eventId_fk": {
+          "name": "athlete_event_registrations_eventId_events_eventId_fk",
+          "tableFrom": "athlete_event_registrations",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "athlete_event_registrations_bibNumber_eventId_unique": {
+          "name": "athlete_event_registrations_bibNumber_eventId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "bibNumber",
+            "eventId"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.athletes": {
+      "name": "athletes",
+      "schema": "",
+      "columns": {
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "firstName": {
+          "name": "firstName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lastName": {
+          "name": "lastName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dateOfBirth": {
+          "name": "dateOfBirth",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gender": {
+          "name": "gender",
+          "type": "gender",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lineUserId": {
+          "name": "lineUserId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phoneNumber": {
+          "name": "phoneNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressNo": {
+          "name": "addressNo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressMoo": {
+          "name": "addressMoo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressSoi": {
+          "name": "addressSoi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressRoad": {
+          "name": "addressRoad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressSubdistrict": {
+          "name": "addressSubdistrict",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressDistrict": {
+          "name": "addressDistrict",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressProvince": {
+          "name": "addressProvince",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressPostcode": {
+          "name": "addressPostcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.checkins": {
+      "name": "checkins",
+      "schema": "",
+      "columns": {
+        "checkinId": {
+          "name": "checkinId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stationId": {
+          "name": "stationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bibNumber": {
+          "name": "bibNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checkedInAt": {
+          "name": "checkedInAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "isNewAthlete": {
+          "name": "isNewAthlete",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "isDuplicate": {
+          "name": "isDuplicate",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "checkins_athlete_event_idx": {
+          "name": "checkins_athlete_event_idx",
+          "columns": [
+            {
+              "expression": "athleteId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "eventId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "checkins_event_id_idx": {
+          "name": "checkins_event_id_idx",
+          "columns": [
+            {
+              "expression": "eventId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "checkins_checked_in_at_idx": {
+          "name": "checkins_checked_in_at_idx",
+          "columns": [
+            {
+              "expression": "checkedInAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "checkins_athleteId_athletes_athleteId_fk": {
+          "name": "checkins_athleteId_athletes_athleteId_fk",
+          "tableFrom": "checkins",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "checkins_stationId_stations_stationId_fk": {
+          "name": "checkins_stationId_stations_stationId_fk",
+          "tableFrom": "checkins",
+          "tableTo": "stations",
+          "columnsFrom": [
+            "stationId"
+          ],
+          "columnsTo": [
+            "stationId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "checkins_eventId_events_eventId_fk": {
+          "name": "checkins_eventId_events_eventId_fk",
+          "tableFrom": "checkins",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.events": {
+      "name": "events",
+      "schema": "",
+      "columns": {
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventName": {
+          "name": "eventName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventLocation": {
+          "name": "eventLocation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventCity": {
+          "name": "eventCity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventType": {
+          "name": "eventType",
+          "type": "event_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'run'"
+        },
+        "organizerName": {
+          "name": "organizerName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "startDate": {
+          "name": "startDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endDate": {
+          "name": "endDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isPublic": {
+          "name": "isPublic",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "hasParticipantImport": {
+          "name": "hasParticipantImport",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "event_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "events_sponsor_id_idx": {
+          "name": "events_sponsor_id_idx",
+          "columns": [
+            {
+              "expression": "sponsorId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "events_sponsorId_sponsors_sponsorId_fk": {
+          "name": "events_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "events",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.asset_bookings": {
+      "name": "asset_bookings",
+      "schema": "",
+      "columns": {
+        "bookingId": {
+          "name": "bookingId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "assetId": {
+          "name": "assetId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "asset_bookings_assetId_assets_assetId_fk": {
+          "name": "asset_bookings_assetId_assets_assetId_fk",
+          "tableFrom": "asset_bookings",
+          "tableTo": "assets",
+          "columnsFrom": [
+            "assetId"
+          ],
+          "columnsTo": [
+            "assetId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "asset_bookings_eventId_events_eventId_fk": {
+          "name": "asset_bookings_eventId_events_eventId_fk",
+          "tableFrom": "asset_bookings",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.assets": {
+      "name": "assets",
+      "schema": "",
+      "columns": {
+        "assetId": {
+          "name": "assetId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "assetName": {
+          "name": "assetName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assetType": {
+          "name": "assetType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "serialNumber": {
+          "name": "serialNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.athlete_sponsors": {
+      "name": "athlete_sponsors",
+      "schema": "",
+      "columns": {
+        "athleteSponsorId": {
+          "name": "athleteSponsorId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "firstInteractionAt": {
+          "name": "firstInteractionAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "totalStamps": {
+          "name": "totalStamps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "athlete_sponsors_athleteId_athletes_athleteId_fk": {
+          "name": "athlete_sponsors_athleteId_athletes_athleteId_fk",
+          "tableFrom": "athlete_sponsors",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "athlete_sponsors_sponsorId_sponsors_sponsorId_fk": {
+          "name": "athlete_sponsors_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "athlete_sponsors",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_logs": {
+      "name": "audit_logs",
+      "schema": "",
+      "columns": {
+        "auditId": {
+          "name": "auditId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "targetTable": {
+          "name": "targetTable",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "targetId": {
+          "name": "targetId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "before": {
+          "name": "before",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "after": {
+          "name": "after",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ipAddress": {
+          "name": "ipAddress",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "audit_logs_userId_users_userId_fk": {
+          "name": "audit_logs_userId_users_userId_fk",
+          "tableFrom": "audit_logs",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.event_sponsors": {
+      "name": "event_sponsors",
+      "schema": "",
+      "columns": {
+        "eventSponsorId": {
+          "name": "eventSponsorId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stampScope": {
+          "name": "stampScope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'per_event'"
+        },
+        "stampRule": {
+          "name": "stampRule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'first_only'"
+        },
+        "maxStampsPerAthlete": {
+          "name": "maxStampsPerAthlete",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "config": {
+          "name": "config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "event_sponsors_eventId_events_eventId_fk": {
+          "name": "event_sponsors_eventId_events_eventId_fk",
+          "tableFrom": "event_sponsors",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "event_sponsors_sponsorId_sponsors_sponsorId_fk": {
+          "name": "event_sponsors_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "event_sponsors",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.message_templates": {
+      "name": "message_templates",
+      "schema": "",
+      "columns": {
+        "templateId": {
+          "name": "templateId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "triggerPoint": {
+          "name": "triggerPoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'line'"
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "variables": {
+          "name": "variables",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "message_templates_sponsorId_sponsors_sponsorId_fk": {
+          "name": "message_templates_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "message_templates",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notification_logs": {
+      "name": "notification_logs",
+      "schema": "",
+      "columns": {
+        "logId": {
+          "name": "logId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "recipientId": {
+          "name": "recipientId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipientType": {
+          "name": "recipientType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sentAt": {
+          "name": "sentAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'sent'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.notification_preferences": {
+      "name": "notification_preferences",
+      "schema": "",
+      "columns": {
+        "prefId": {
+          "name": "prefId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "receiveCheckinNotif": {
+          "name": "receiveCheckinNotif",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "receiveStampNotif": {
+          "name": "receiveStampNotif",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "receiveRewardNotif": {
+          "name": "receiveRewardNotif",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "receiveEventNotif": {
+          "name": "receiveEventNotif",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "notification_preferences_athleteId_athletes_athleteId_fk": {
+          "name": "notification_preferences_athleteId_athletes_athleteId_fk",
+          "tableFrom": "notification_preferences",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reward_milestones": {
+      "name": "reward_milestones",
+      "schema": "",
+      "columns": {
+        "milestoneId": {
+          "name": "milestoneId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stampCount": {
+          "name": "stampCount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rewardTitle": {
+          "name": "rewardTitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rewardDescription": {
+          "name": "rewardDescription",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rewardType": {
+          "name": "rewardType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rewardDetail": {
+          "name": "rewardDetail",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reward_milestones_sponsorId_sponsors_sponsorId_fk": {
+          "name": "reward_milestones_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "reward_milestones",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rewards": {
+      "name": "rewards",
+      "schema": "",
+      "columns": {
+        "rewardId": {
+          "name": "rewardId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "milestoneId": {
+          "name": "milestoneId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rewardType": {
+          "name": "rewardType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rewardDetail": {
+          "name": "rewardDetail",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimedAt": {
+          "name": "claimedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "rewards_athleteId_athletes_athleteId_fk": {
+          "name": "rewards_athleteId_athletes_athleteId_fk",
+          "tableFrom": "rewards",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "rewards_sponsorId_sponsors_sponsorId_fk": {
+          "name": "rewards_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "rewards",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "rewards_eventId_events_eventId_fk": {
+          "name": "rewards_eventId_events_eventId_fk",
+          "tableFrom": "rewards",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sponsor_blacklists": {
+      "name": "sponsor_blacklists",
+      "schema": "",
+      "columns": {
+        "blacklistId": {
+          "name": "blacklistId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sponsor_blacklists_sponsorId_sponsors_sponsorId_fk": {
+          "name": "sponsor_blacklists_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "sponsor_blacklists",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sponsor_blacklists_athleteId_athletes_athleteId_fk": {
+          "name": "sponsor_blacklists_athleteId_athletes_athleteId_fk",
+          "tableFrom": "sponsor_blacklists",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sponsor_blacklists_createdBy_users_userId_fk": {
+          "name": "sponsor_blacklists_createdBy_users_userId_fk",
+          "tableFrom": "sponsor_blacklists",
+          "tableTo": "users",
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sponsor_consent_templates": {
+      "name": "sponsor_consent_templates",
+      "schema": "",
+      "columns": {
+        "templateId": {
+          "name": "templateId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sponsor_consent_templates_sponsorId_sponsors_sponsorId_fk": {
+          "name": "sponsor_consent_templates_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "sponsor_consent_templates",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sponsor_settings": {
+      "name": "sponsor_settings",
+      "schema": "",
+      "columns": {
+        "settingId": {
+          "name": "settingId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sponsor_settings_sponsorId_sponsors_sponsorId_fk": {
+          "name": "sponsor_settings_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "sponsor_settings",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.staff_event_assignments": {
+      "name": "staff_event_assignments",
+      "schema": "",
+      "columns": {
+        "assignmentId": {
+          "name": "assignmentId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stationId": {
+          "name": "stationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assignedAt": {
+          "name": "assignedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "staff_event_assignments_userId_users_userId_fk": {
+          "name": "staff_event_assignments_userId_users_userId_fk",
+          "tableFrom": "staff_event_assignments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "userId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "staff_event_assignments_eventId_events_eventId_fk": {
+          "name": "staff_event_assignments_eventId_events_eventId_fk",
+          "tableFrom": "staff_event_assignments",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "staff_event_assignments_stationId_stations_stationId_fk": {
+          "name": "staff_event_assignments_stationId_stations_stationId_fk",
+          "tableFrom": "staff_event_assignments",
+          "tableTo": "stations",
+          "columnsFrom": [
+            "stationId"
+          ],
+          "columnsTo": [
+            "stationId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.subscription_tiers": {
+      "name": "subscription_tiers",
+      "schema": "",
+      "columns": {
+        "tierId": {
+          "name": "tierId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "level": {
+          "name": "level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maxEvents": {
+          "name": "maxEvents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maxStations": {
+          "name": "maxStations",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "features": {
+          "name": "features",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.system_settings": {
+      "name": "system_settings",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sponsors": {
+      "name": "sponsors",
+      "schema": "",
+      "columns": {
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sponsorName": {
+          "name": "sponsorName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyRegNumber": {
+          "name": "companyRegNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "addressNo": {
+          "name": "addressNo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressMoo": {
+          "name": "addressMoo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressSoi": {
+          "name": "addressSoi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressRoad": {
+          "name": "addressRoad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressSubdistrict": {
+          "name": "addressSubdistrict",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressDistrict": {
+          "name": "addressDistrict",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressProvince": {
+          "name": "addressProvince",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "addressPostcode": {
+          "name": "addressPostcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isInternal": {
+          "name": "isInternal",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "serviceType": {
+          "name": "serviceType",
+          "type": "service_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'physical_and_digital'"
+        },
+        "contactName": {
+          "name": "contactName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contactEmail": {
+          "name": "contactEmail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logoUrl": {
+          "name": "logoUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "brandColor": {
+          "name": "brandColor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stamps": {
+      "name": "stamps",
+      "schema": "",
+      "columns": {
+        "stampId": {
+          "name": "stampId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "athleteId": {
+          "name": "athleteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stationId": {
+          "name": "stationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stampSource": {
+          "name": "stampSource",
+          "type": "stamp_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stampedAt": {
+          "name": "stampedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "stamps_sponsor_id_idx": {
+          "name": "stamps_sponsor_id_idx",
+          "columns": [
+            {
+              "expression": "sponsorId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "stamps_event_id_idx": {
+          "name": "stamps_event_id_idx",
+          "columns": [
+            {
+              "expression": "eventId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "stamps_athleteId_athletes_athleteId_fk": {
+          "name": "stamps_athleteId_athletes_athleteId_fk",
+          "tableFrom": "stamps",
+          "tableTo": "athletes",
+          "columnsFrom": [
+            "athleteId"
+          ],
+          "columnsTo": [
+            "athleteId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stamps_eventId_events_eventId_fk": {
+          "name": "stamps_eventId_events_eventId_fk",
+          "tableFrom": "stamps",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stamps_stationId_stations_stationId_fk": {
+          "name": "stamps_stationId_stations_stationId_fk",
+          "tableFrom": "stamps",
+          "tableTo": "stations",
+          "columnsFrom": [
+            "stationId"
+          ],
+          "columnsTo": [
+            "stationId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "stamps_sponsorId_sponsors_sponsorId_fk": {
+          "name": "stamps_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "stamps",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stations": {
+      "name": "stations",
+      "schema": "",
+      "columns": {
+        "stationId": {
+          "name": "stationId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "eventId": {
+          "name": "eventId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stationType": {
+          "name": "stationType",
+          "type": "station_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stationName": {
+          "name": "stationName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stampOnAddFriend": {
+          "name": "stampOnAddFriend",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "stations_eventId_events_eventId_fk": {
+          "name": "stations_eventId_events_eventId_fk",
+          "tableFrom": "stations",
+          "tableTo": "events",
+          "columnsFrom": [
+            "eventId"
+          ],
+          "columnsTo": [
+            "eventId"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passwordHash": {
+          "name": "passwordHash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phoneNumber": {
+          "name": "phoneNumber",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sponsorId": {
+          "name": "sponsorId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lineUserId": {
+          "name": "lineUserId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "lastLoginAt": {
+          "name": "lastLoginAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ipAddress": {
+          "name": "ipAddress",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_sponsorId_sponsors_sponsorId_fk": {
+          "name": "users_sponsorId_sponsors_sponsorId_fk",
+          "tableFrom": "users",
+          "tableTo": "sponsors",
+          "columnsFrom": [
+            "sponsorId"
+          ],
+          "columnsTo": [
+            "sponsorId"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.status": {
+      "name": "status",
+      "schema": "public",
+      "values": [
+        "active",
+        "hidden"
+      ]
+    },
+    "public.gender": {
+      "name": "gender",
+      "schema": "public",
+      "values": [
+        "male",
+        "female",
+        "other"
+      ]
+    },
+    "public.event_status": {
+      "name": "event_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "published",
+        "active",
+        "closed",
+        "archived"
+      ]
+    },
+    "public.event_type": {
+      "name": "event_type",
+      "schema": "public",
+      "values": [
+        "run",
+        "triathlon",
+        "other"
+      ]
+    },
+    "public.service_type": {
+      "name": "service_type",
+      "schema": "public",
+      "values": [
+        "physical_and_digital",
+        "digital_only"
+      ]
+    },
+    "public.stamp_source": {
+      "name": "stamp_source",
+      "schema": "public",
+      "values": [
+        "check_in",
+        "add_friend"
+      ]
+    },
+    "public.station_type": {
+      "name": "station_type",
+      "schema": "public",
+      "values": [
+        "air_recovery",
+        "ice_bath",
+        "other"
+      ]
+    },
+    "public.user_role": {
+      "name": "user_role",
+      "schema": "public",
+      "values": [
+        "super_admin_owner",
+        "super_admin_manager",
+        "super_admin_viewer",
+        "sponsor_admin",
+        "sponsor_staff"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

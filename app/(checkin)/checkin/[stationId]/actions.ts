@@ -11,8 +11,6 @@ import {
 import { PERMISSIONS, canAccess } from '@/lib/rbac'
 import type { CheckinResult } from './types'
 
-export type { CheckinResult }
-
 export async function performCheckin(input: {
   bibNumber: string
   stationId: string

@@ -34,67 +34,54 @@ export async function getCheckinStats(opts?: {
   sponsorId?: string
 }): Promise<CheckinStats> {
   const sponsorId = opts?.sponsorId
-
-  // Total check-ins (scoped by sponsorId via events join if needed)
-  const totalCheckinsResult = sponsorId
-    ? await db
-        .select({ value: count() })
-        .from(checkins)
-        .innerJoin(events, eq(checkins.eventId, events.eventId))
-        .where(eq(events.sponsorId, sponsorId))
-    : await db.select({ value: count() }).from(checkins)
-
-  const totalCheckins = totalCheckinsResult[0]?.value ?? 0
-
-  // Total unique athletes who checked in
-  const totalAthletesResult = sponsorId
-    ? await db
-        .select({ value: countDistinct(checkins.athleteId) })
-        .from(checkins)
-        .innerJoin(events, eq(checkins.eventId, events.eventId))
-        .where(eq(events.sponsorId, sponsorId))
-    : await db.select({ value: countDistinct(checkins.athleteId) }).from(checkins)
-
-  const totalAthletes = totalAthletesResult[0]?.value ?? 0
-
-  // Total stamps
-  const totalStampsResult = sponsorId
-    ? await db
-        .select({ value: count() })
-        .from(stamps)
-        .where(eq(stamps.sponsorId, sponsorId))
-    : await db.select({ value: count() }).from(stamps)
-
-  const totalStamps = totalStampsResult[0]?.value ?? 0
-
-  // New athletes: athletes created within the last 30 days
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const newAthletesResult = sponsorId
-    ? await db
-        .select({ value: countDistinct(checkins.athleteId) })
-        .from(checkins)
-        .innerJoin(events, eq(checkins.eventId, events.eventId))
-        .innerJoin(athletes, eq(checkins.athleteId, athletes.athleteId))
-        .where(
-          and(
-            eq(events.sponsorId, sponsorId),
-            gte(athletes.createdAt, thirtyDaysAgo),
-          ),
-        )
-    : await db
-        .select({ value: count() })
-        .from(athletes)
-        .where(gte(athletes.createdAt, thirtyDaysAgo))
+  const [totalCheckinsResult, totalAthletesResult, totalStampsResult, newAthletesResult] =
+    await Promise.all([
+      sponsorId
+        ? db
+            .select({ value: count() })
+            .from(checkins)
+            .innerJoin(events, eq(checkins.eventId, events.eventId))
+            .where(eq(events.sponsorId, sponsorId))
+        : db.select({ value: count() }).from(checkins),
 
-  const newAthletes = newAthletesResult[0]?.value ?? 0
+      sponsorId
+        ? db
+            .select({ value: countDistinct(checkins.athleteId) })
+            .from(checkins)
+            .innerJoin(events, eq(checkins.eventId, events.eventId))
+            .where(eq(events.sponsorId, sponsorId))
+        : db.select({ value: countDistinct(checkins.athleteId) }).from(checkins),
+
+      sponsorId
+        ? db
+            .select({ value: count() })
+            .from(stamps)
+            .where(eq(stamps.sponsorId, sponsorId))
+        : db.select({ value: count() }).from(stamps),
+
+      sponsorId
+        ? db
+            .select({ value: countDistinct(checkins.athleteId) })
+            .from(checkins)
+            .innerJoin(events, eq(checkins.eventId, events.eventId))
+            .innerJoin(athletes, eq(checkins.athleteId, athletes.athleteId))
+            .where(
+              and(
+                eq(events.sponsorId, sponsorId),
+                gte(athletes.createdAt, thirtyDaysAgo),
+              ),
+            )
+        : db.select({ value: count() }).from(athletes).where(gte(athletes.createdAt, thirtyDaysAgo)),
+    ])
 
   return {
-    totalCheckins: Number(totalCheckins),
-    totalAthletes: Number(totalAthletes),
-    totalStamps: Number(totalStamps),
-    newAthletes: Number(newAthletes),
+    totalCheckins: Number(totalCheckinsResult[0]?.value ?? 0),
+    totalAthletes: Number(totalAthletesResult[0]?.value ?? 0),
+    totalStamps: Number(totalStampsResult[0]?.value ?? 0),
+    newAthletes: Number(newAthletesResult[0]?.value ?? 0),
   }
 }
 
@@ -103,47 +90,41 @@ export async function getCheckinsByEvent(opts?: {
 }): Promise<CheckinsByEvent[]> {
   const sponsorId = opts?.sponsorId
 
-  // Get checkin counts per event
-  const checkinRows = sponsorId
-    ? await db
-        .select({
-          eventId: events.eventId,
-          eventName: events.eventName,
-          checkinCount: count(checkins.checkinId),
-        })
-        .from(events)
-        .leftJoin(checkins, eq(checkins.eventId, events.eventId))
-        .where(eq(events.sponsorId, sponsorId))
-        .groupBy(events.eventId, events.eventName)
-        .orderBy(desc(count(checkins.checkinId)))
-    : await db
-        .select({
-          eventId: events.eventId,
-          eventName: events.eventName,
-          checkinCount: count(checkins.checkinId),
-        })
-        .from(events)
-        .leftJoin(checkins, eq(checkins.eventId, events.eventId))
-        .groupBy(events.eventId, events.eventName)
-        .orderBy(desc(count(checkins.checkinId)))
+  const [checkinRows, stampRows] = await Promise.all([
+    sponsorId
+      ? db
+          .select({
+            eventId: events.eventId,
+            eventName: events.eventName,
+            checkinCount: count(checkins.checkinId),
+          })
+          .from(events)
+          .leftJoin(checkins, eq(checkins.eventId, events.eventId))
+          .where(eq(events.sponsorId, sponsorId))
+          .groupBy(events.eventId, events.eventName)
+          .orderBy(desc(count(checkins.checkinId)))
+      : db
+          .select({
+            eventId: events.eventId,
+            eventName: events.eventName,
+            checkinCount: count(checkins.checkinId),
+          })
+          .from(events)
+          .leftJoin(checkins, eq(checkins.eventId, events.eventId))
+          .groupBy(events.eventId, events.eventName)
+          .orderBy(desc(count(checkins.checkinId))),
 
-  // Get stamp counts per event
-  const stampRows = sponsorId
-    ? await db
-        .select({
-          eventId: stamps.eventId,
-          stampCount: count(stamps.stampId),
-        })
-        .from(stamps)
-        .where(eq(stamps.sponsorId, sponsorId))
-        .groupBy(stamps.eventId)
-    : await db
-        .select({
-          eventId: stamps.eventId,
-          stampCount: count(stamps.stampId),
-        })
-        .from(stamps)
-        .groupBy(stamps.eventId)
+    sponsorId
+      ? db
+          .select({ eventId: stamps.eventId, stampCount: count(stamps.stampId) })
+          .from(stamps)
+          .where(eq(stamps.sponsorId, sponsorId))
+          .groupBy(stamps.eventId)
+      : db
+          .select({ eventId: stamps.eventId, stampCount: count(stamps.stampId) })
+          .from(stamps)
+          .groupBy(stamps.eventId),
+  ])
 
   const stampMap = new Map(
     stampRows.map((r) => [r.eventId, Number(r.stampCount)]),

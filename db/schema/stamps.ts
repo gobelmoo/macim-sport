@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { idColumn } from './_common'
 import { athletes } from './athletes'
 import { events } from './events'
@@ -26,4 +26,7 @@ export const stamps = pgTable('stamps', {
     .references(() => sponsors.sponsorId, { onDelete: 'restrict' }),
   stampSource: stampSourceEnum().notNull(),
   stampedAt: timestamp({ mode: 'date' }).defaultNow().notNull(),
-})
+}, (t) => [
+  index('stamps_sponsor_id_idx').on(t.sponsorId),
+  index('stamps_event_id_idx').on(t.eventId),
+])

@@ -13,7 +13,7 @@ import {
 import type { NavGroup, NavItem } from '@/lib/nav'
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
-  const pathname = usePathname() ?? ''
+  const pathname = usePathname()
 
   const isActive = (item: NavItem) => {
     if (item.href === '/dashboard') return pathname === '/dashboard'

@@ -63,7 +63,7 @@ export async function createEventAction(
   }
 
   const { eventId } = await createEvent(parsed.data)
-  redirect(`/events/${eventId}`)
+  redirect(`/dashboard/events/${eventId}`)
 }
 
 export async function updateEventAction(
@@ -90,7 +90,7 @@ export async function updateEventAction(
   }
 
   await updateEvent(eventId, parsed.data)
-  redirect(`/events/${eventId}`)
+  redirect(`/dashboard/events/${eventId}`)
 }
 
 export async function updateEventStatusAction(

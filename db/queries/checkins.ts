@@ -156,33 +156,35 @@ export async function createStamp(
 export async function getEventWithStations(
   eventId: string,
 ): Promise<EventWithStations | null> {
-  const [eventRow] = await db
-    .select({
-      eventId: events.eventId,
-      eventName: events.eventName,
-      eventLocation: events.eventLocation,
-      eventCity: events.eventCity,
-      startDate: events.startDate,
-      endDate: events.endDate,
-      status: events.status,
-    })
-    .from(events)
-    .where(eq(events.eventId, eventId))
-    .limit(1)
+  const [eventRows, stationRows] = await Promise.all([
+    db
+      .select({
+        eventId: events.eventId,
+        eventName: events.eventName,
+        eventLocation: events.eventLocation,
+        eventCity: events.eventCity,
+        startDate: events.startDate,
+        endDate: events.endDate,
+        status: events.status,
+      })
+      .from(events)
+      .where(eq(events.eventId, eventId))
+      .limit(1),
 
+    db
+      .select({
+        stationId: stations.stationId,
+        eventId: stations.eventId,
+        stationName: stations.stationName,
+        status: stations.status,
+      })
+      .from(stations)
+      .where(and(eq(stations.eventId, eventId), eq(stations.status, 'active')))
+      .orderBy(stations.createdAt),
+  ])
+
+  const eventRow = eventRows[0]
   if (!eventRow) return null
-
-  const stationRows = await db
-    .select({
-      stationId: stations.stationId,
-      eventId: stations.eventId,
-      stationName: stations.stationName,
-      status: stations.status,
-    })
-    .from(stations)
-    .where(and(eq(stations.eventId, eventId), eq(stations.status, 'active')))
-    .orderBy(stations.createdAt)
-
   return { ...eventRow, stations: stationRows }
 }
 

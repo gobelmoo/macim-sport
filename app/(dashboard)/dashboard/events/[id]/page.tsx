@@ -92,10 +92,10 @@ export default async function EventDetailPage({ params }: Props) {
             <StatusButtons eventId={event.eventId} currentStatus={event.status} />
           )}
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/events/${id}/stations`}>จัดการ Stations</Link>
+            <Link href={`/dashboard/events/${id}/stations`}>จัดการ Stations</Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/events/${id}/import`}>นำเข้าข้อมูลนักกีฬา</Link>
+            <Link href={`/dashboard/events/${id}/import`}>นำเข้าข้อมูลนักกีฬา</Link>
           </Button>
         </div>
       </div>

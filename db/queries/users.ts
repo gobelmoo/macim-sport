@@ -6,6 +6,19 @@ import type { UserRole } from '@/lib/rbac'
 
 export type UserRow = typeof users.$inferSelect
 
+export type UserListItem = {
+  userId: string
+  email: string
+  phoneNumber: string | null
+  role: UserRole
+  sponsorId: string | null
+  lineUserId: string | null
+  status: 'active' | 'hidden'
+  createdAt: Date
+  lastLoginAt: Date | null
+  sponsorName: string | null
+}
+
 export type UserWithSponsor = UserRow & {
   sponsorName: string | null
 }
@@ -25,12 +38,11 @@ export type UpdateUserData = {
 
 export async function listUsers(opts?: {
   sponsorId?: string
-}): Promise<UserWithSponsor[]> {
+}): Promise<UserListItem[]> {
   const rows = await db
     .select({
       userId: users.userId,
       email: users.email,
-      passwordHash: users.passwordHash,
       phoneNumber: users.phoneNumber,
       role: users.role,
       sponsorId: users.sponsorId,
@@ -38,18 +50,12 @@ export async function listUsers(opts?: {
       status: users.status,
       createdAt: users.createdAt,
       lastLoginAt: users.lastLoginAt,
-      ipAddress: users.ipAddress,
       sponsorName: sponsors.sponsorName,
     })
     .from(users)
     .leftJoin(sponsors, eq(users.sponsorId, sponsors.sponsorId))
+    .where(opts?.sponsorId ? eq(users.sponsorId, opts.sponsorId) : undefined)
     .orderBy(desc(users.createdAt))
-
-  if (opts?.sponsorId) {
-    return rows
-      .filter((r) => r.sponsorId === opts.sponsorId)
-      .map((r) => ({ ...r, sponsorName: r.sponsorName ?? null }))
-  }
 
   return rows.map((r) => ({ ...r, sponsorName: r.sponsorName ?? null }))
 }

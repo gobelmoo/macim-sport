@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { canAccess, PERMISSIONS, ROLES } from '@/lib/rbac'
+import { canAccess, PERMISSIONS } from '@/lib/rbac'
+import { formatThaiDate } from '@/lib/utils'
 import { listEvents } from '@/db/queries/events'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -39,13 +40,6 @@ const EVENT_STATUS_VARIANT: Record<
   archived: 'outline',
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('th-TH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 
 export default async function EventsPage() {
   const session = await auth()
@@ -64,8 +58,7 @@ export default async function EventsPage() {
   const scopedSponsorId = canViewAll ? undefined : (sponsorId ?? undefined)
   const eventList = await listEvents(scopedSponsorId)
 
-  const canCreate =
-    role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
+  const canCreate = canAccess(PERMISSIONS.EVENT_CREATE, authz)
 
   return (
     <main className="p-6 lg:p-8">
@@ -73,7 +66,7 @@ export default async function EventsPage() {
         <h1 className="text-2xl font-semibold">Events</h1>
         {canCreate && (
           <Button asChild>
-            <Link href="/events/new">สร้าง Event</Link>
+            <Link href="/dashboard/events/new">สร้าง Event</Link>
           </Button>
         )}
       </div>
@@ -100,7 +93,7 @@ export default async function EventsPage() {
                 <TableRow key={event.eventId}>
                   <TableCell>
                     <Link
-                      href={`/events/${event.eventId}`}
+                      href={`/dashboard/events/${event.eventId}`}
                       className="font-medium text-primary hover:underline"
                     >
                       {event.eventName}
@@ -112,10 +105,10 @@ export default async function EventsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatDate(event.startDate)}
+                    {formatThaiDate(event.startDate)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatDate(event.endDate)}
+                    {formatThaiDate(event.endDate)}
                   </TableCell>
                   <TableCell>
                     <Badge

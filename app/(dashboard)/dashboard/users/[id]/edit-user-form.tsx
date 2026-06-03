@@ -67,7 +67,7 @@ export function EditUserForm({ userId, defaultValues }: Props) {
           {isPending ? 'กำลังบันทึก...' : 'บันทึก'}
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/users">กลับ</Link>
+          <Link href="/dashboard/users">กลับ</Link>
         </Button>
       </div>
     </form>

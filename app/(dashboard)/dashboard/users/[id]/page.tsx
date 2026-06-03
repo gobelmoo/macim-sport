@@ -4,15 +4,7 @@ import { getUser } from '@/db/queries/users'
 import { Badge } from '@/components/ui/badge'
 import { EditUserForm } from './edit-user-form'
 import { DisableUserButton } from './disable-user-button'
-import type { UserRole } from '@/lib/rbac'
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin_owner: 'Owner',
-  super_admin_manager: 'Manager',
-  super_admin_viewer: 'Viewer',
-  sponsor_admin: 'Sponsor Admin',
-  sponsor_staff: 'Sponsor Staff',
-}
+import { canManageUsers, ROLE_LABELS } from '@/lib/rbac'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -24,11 +16,7 @@ export default async function UserDetailPage({ params }: Props) {
 
   const { role, sponsorId, permissions } = session.user
 
-  const canManage =
-    permissions.includes('user:manage') ||
-    permissions.includes('user:manage_staff')
-
-  if (!canManage) redirect('/users')
+  if (!canManageUsers({ role, permissions })) redirect('/dashboard/users')
 
   const { id } = await params
   const user = await getUser(id)
@@ -36,7 +24,7 @@ export default async function UserDetailPage({ params }: Props) {
 
   // sponsor_admin scope check
   if (role === 'sponsor_admin' && user.sponsorId !== sponsorId) {
-    redirect('/users')
+    redirect('/dashboard/users')
   }
 
   return (

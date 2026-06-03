@@ -71,7 +71,7 @@ export default async function StationsPage({ params }: Props) {
       {/* Header */}
       <div className="mb-2 flex items-center gap-2">
         <Link
-          href={`/events/${id}`}
+          href={`/dashboard/events/${id}`}
           className="text-sm text-muted-foreground hover:underline"
         >
           {event.eventName}
@@ -82,7 +82,7 @@ export default async function StationsPage({ params }: Props) {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Stations</h1>
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/events/${id}`}>กลับไป Event</Link>
+          <Link href={`/dashboard/events/${id}`}>กลับไป Event</Link>
         </Button>
       </div>
 

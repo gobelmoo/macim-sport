@@ -168,11 +168,7 @@ export function NewUserForm({ creatorRole, creatorSponsorId, sponsors }: Props) 
         </div>
       )}
 
-      {/* Global error */}
-      {state && 'error' in state && !('fieldErrors' in state && Object.keys(state.fieldErrors ?? {}).length) && (
-        <p className="text-sm text-destructive">{state.error}</p>
-      )}
-      {state && 'error' in state && 'fieldErrors' in state && Object.keys(state.fieldErrors ?? {}).length > 0 && (
+      {state && 'error' in state && (
         <p className="text-sm text-destructive">{state.error}</p>
       )}
 
@@ -181,7 +177,7 @@ export function NewUserForm({ creatorRole, creatorSponsorId, sponsors }: Props) 
           {isPending ? 'กำลังสร้าง...' : 'สร้างผู้ใช้'}
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/users">ยกเลิก</Link>
+          <Link href="/dashboard/users">ยกเลิก</Link>
         </Button>
       </div>
     </form>

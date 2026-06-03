@@ -8,6 +8,13 @@
       "when": 1780473597588,
       "tag": "0000_loud_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780476204232,
+      "tag": "0001_lumpy_machine_man",
+      "breakpoints": true
     }
   ]
 }

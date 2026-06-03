@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { auth } from '@/auth'
-import type { UserRole } from '@/lib/rbac'
+import { canManageUsers, isMacimAdmin, type UserRole } from '@/lib/rbac'
 import {
   createUser,
   disableUser,
@@ -34,13 +34,6 @@ const ALLOWED_ROLES_BY_CREATOR: Record<string, UserRole[]> = {
   super_admin_manager: ['super_admin_viewer', 'sponsor_admin', 'sponsor_staff'],
   sponsor_admin: ['sponsor_staff'],
 }
-
-// Roles that belong to MACIM (no sponsorId required)
-const MACIM_ROLES: UserRole[] = [
-  'super_admin_owner',
-  'super_admin_manager',
-  'super_admin_viewer',
-]
 
 // ---------------------------------------------------------------------------
 // Validation schemas
@@ -78,11 +71,7 @@ export async function createUserAction(
 
   const creatorRole = session.user.role
 
-  // Only those with user:manage or user:manage_staff can create
-  if (
-    !session.user.permissions.includes('user:manage') &&
-    !session.user.permissions.includes('user:manage_staff')
-  ) {
+  if (!canManageUsers(session.user)) {
     return { error: 'ไม่มีสิทธิ์สร้างผู้ใช้' }
   }
 
@@ -118,7 +107,7 @@ export async function createUserAction(
   if (creatorRole === 'sponsor_admin') {
     // Force own sponsorId; ignore any posted value
     resolvedSponsorId = session.user.sponsorId
-  } else if (!MACIM_ROLES.includes(role)) {
+  } else if (!isMacimAdmin(role)) {
     // sponsor_admin / sponsor_staff need a sponsorId
     const postedSponsorId = parsed.data.sponsorId
     if (!postedSponsorId) {
@@ -152,8 +141,8 @@ export async function createUserAction(
     throw err
   }
 
-  revalidatePath('/users')
-  redirect('/users')
+  revalidatePath('/dashboard/users')
+  redirect('/dashboard/users')
 }
 
 // ---------------------------------------------------------------------------
@@ -168,10 +157,7 @@ export async function updateUserAction(
   const session = await auth()
   if (!session?.user) return { error: 'ไม่ได้เข้าสู่ระบบ' }
 
-  if (
-    !session.user.permissions.includes('user:manage') &&
-    !session.user.permissions.includes('user:manage_staff')
-  ) {
+  if (!canManageUsers(session.user)) {
     return { error: 'ไม่มีสิทธิ์แก้ไขผู้ใช้' }
   }
 
@@ -218,8 +204,8 @@ export async function updateUserAction(
     throw err
   }
 
-  revalidatePath('/users')
-  revalidatePath(`/users/${userId}`)
+  revalidatePath('/dashboard/users')
+  revalidatePath(`/dashboard/users/${userId}`)
   return { success: true }
 }
 
@@ -235,10 +221,7 @@ export async function disableUserAction(
   const session = await auth()
   if (!session?.user) return { error: 'ไม่ได้เข้าสู่ระบบ' }
 
-  if (
-    !session.user.permissions.includes('user:manage') &&
-    !session.user.permissions.includes('user:manage_staff')
-  ) {
+  if (!canManageUsers(session.user)) {
     return { error: 'ไม่มีสิทธิ์ปิดใช้งานผู้ใช้' }
   }
 
@@ -253,7 +236,7 @@ export async function disableUserAction(
 
   await disableUser(userId)
 
-  revalidatePath('/users')
-  revalidatePath(`/users/${userId}`)
+  revalidatePath('/dashboard/users')
+  revalidatePath(`/dashboard/users/${userId}`)
   return { success: true }
 }

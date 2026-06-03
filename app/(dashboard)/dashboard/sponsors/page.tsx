@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS } from '@/lib/rbac'
+import { formatThaiDate } from '@/lib/utils'
 import { listSponsors } from '@/db/queries/sponsors'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,13 +30,6 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   hidden: 'outline',
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('th-TH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 
 export default async function SponsorsPage() {
   const session = await auth()
@@ -106,7 +100,7 @@ export default async function SponsorsPage() {
                     {sponsor.contactEmail}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatDate(sponsor.createdAt)}
+                    {formatThaiDate(sponsor.createdAt)}
                   </TableCell>
                 </TableRow>
               ))}

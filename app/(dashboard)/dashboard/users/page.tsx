@@ -13,15 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { UserRole } from '@/lib/rbac'
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin_owner: 'Owner',
-  super_admin_manager: 'Manager',
-  super_admin_viewer: 'Viewer',
-  sponsor_admin: 'Sponsor Admin',
-  sponsor_staff: 'Sponsor Staff',
-}
+import { canManageUsers, ROLE_LABELS, type UserRole } from '@/lib/rbac'
 
 const ROLE_VARIANT: Record<
   UserRole,
@@ -40,9 +32,7 @@ export default async function UsersPage() {
 
   const { role, sponsorId, permissions } = session.user
 
-  const canCreate =
-    permissions.includes('user:manage') ||
-    permissions.includes('user:manage_staff')
+  const canCreate = canManageUsers({ role, permissions })
 
   // sponsor_admin must always see only their own users; if sponsorId is somehow
   // null, return nothing rather than leaking all users.
@@ -66,7 +56,7 @@ export default async function UsersPage() {
         </div>
         {canCreate && (
           <Button asChild>
-            <Link href="/users/new">สร้างผู้ใช้</Link>
+            <Link href="/dashboard/users/new">สร้างผู้ใช้</Link>
           </Button>
         )}
       </div>
@@ -114,7 +104,7 @@ export default async function UsersPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/users/${user.userId}`}>แก้ไข</Link>
+                      <Link href={`/dashboard/users/${user.userId}`}>แก้ไข</Link>
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -1,4 +1,4 @@
-import { boolean, date, pgEnum, pgTable, text } from 'drizzle-orm/pg-core'
+import { boolean, date, index, pgEnum, pgTable, text } from 'drizzle-orm/pg-core'
 import { createdAtColumn, idColumn, statusEnum } from './_common'
 import { sponsors } from './sponsors'
 
@@ -32,4 +32,6 @@ export const events = pgTable('events', {
   hasParticipantImport: boolean().default(false).notNull(),
   status: eventStatusEnum().default('draft').notNull(),
   createdAt: createdAtColumn(),
-})
+}, (t) => [
+  index('events_sponsor_id_idx').on(t.sponsorId),
+])

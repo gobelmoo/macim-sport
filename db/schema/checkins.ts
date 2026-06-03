@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, index, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { idColumn } from './_common'
 import { athletes } from './athletes'
 import { events } from './events'
@@ -19,4 +19,8 @@ export const checkins = pgTable('checkins', {
   checkedInAt: timestamp({ mode: 'date' }).defaultNow().notNull(),
   isNewAthlete: boolean().default(false).notNull(),
   isDuplicate: boolean().default(false).notNull(),
-})
+}, (t) => [
+  index('checkins_athlete_event_idx').on(t.athleteId, t.eventId),
+  index('checkins_event_id_idx').on(t.eventId),
+  index('checkins_checked_in_at_idx').on(t.checkedInAt),
+])

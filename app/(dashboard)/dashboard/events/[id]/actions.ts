@@ -67,7 +67,7 @@ export async function updateEventAction(
   }
 
   await updateEvent(eventId, parsed.data)
-  revalidatePath(`/events/${eventId}`)
+  revalidatePath(`/dashboard/events/${eventId}`)
   return {}
 }
 
@@ -77,7 +77,7 @@ export async function updateEventStatusAction(
 ): Promise<void> {
   await assertOwnerOrManager()
   await updateEventStatus(eventId, newStatus)
-  revalidatePath(`/events/${eventId}`)
+  revalidatePath(`/dashboard/events/${eventId}`)
 }
 
 export async function createStationAction(
@@ -99,8 +99,8 @@ export async function createStationAction(
   }
 
   await createStation({ eventId, ...parsed.data })
-  revalidatePath(`/events/${eventId}/stations`)
-  redirect(`/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}/stations`)
+  redirect(`/dashboard/events/${eventId}/stations`)
 }
 
 export async function updateStationAction(
@@ -123,7 +123,7 @@ export async function updateStationAction(
   }
 
   await updateStation(stationId, parsed.data)
-  revalidatePath(`/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}/stations`)
   return {}
 }
 
@@ -133,5 +133,5 @@ export async function hideStationAction(
 ): Promise<void> {
   await assertOwnerOrManager()
   await hideStation(stationId)
-  revalidatePath(`/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}/stations`)
 }

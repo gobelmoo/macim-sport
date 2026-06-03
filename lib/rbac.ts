@@ -81,6 +81,24 @@ export function isMacimAdmin(role: UserRole): boolean {
   )
 }
 
+export const ROLE_LABELS: Record<UserRole, string> = {
+  super_admin_owner: 'Owner',
+  super_admin_manager: 'Manager',
+  super_admin_viewer: 'Viewer',
+  sponsor_admin: 'Sponsor Admin',
+  sponsor_staff: 'Sponsor Staff',
+}
+
+export function canManageUsers(authz: {
+  role: UserRole
+  permissions: readonly string[]
+}): boolean {
+  return (
+    canAccess(PERMISSIONS.USER_MANAGE, authz) ||
+    canAccess(PERMISSIONS.USER_MANAGE_STAFF, authz)
+  )
+}
+
 export function canAccess(
   required: Permission | undefined,
   authz: { role: UserRole; permissions: readonly string[] },

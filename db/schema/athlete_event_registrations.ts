@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { index, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 import { idColumn, statusEnum } from './_common'
 import { athletes } from './athletes'
 import { events } from './events'
@@ -18,5 +18,5 @@ export const athleteEventRegistrations = pgTable(
     registeredAt: timestamp({ mode: 'date' }).defaultNow().notNull(),
     status: statusEnum().default('active').notNull(),
   },
-  (t) => [unique().on(t.bibNumber, t.eventId)],
+  (t) => [unique().on(t.bibNumber, t.eventId), index('aer_event_id_idx').on(t.eventId)],
 )
