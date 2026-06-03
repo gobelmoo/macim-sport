@@ -1,10 +1,17 @@
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import { ChevronLeft, Pencil } from 'lucide-react'
 import { auth } from '@/auth'
 import { getUser } from '@/db/queries/users'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { EditUserForm } from './edit-user-form'
-import { DisableUserButton } from './disable-user-button'
-import { canManageUsers, ROLE_LABELS } from '@/lib/rbac'
+import { ToggleUserStatusButton } from './toggle-user-status-button'
+import { canManageUsers } from '@/lib/rbac'
+import { RoleBadge, StatusBadge } from '../_components/user-badges'
+import { initials } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -22,40 +29,70 @@ export default async function UserDetailPage({ params }: Props) {
   const user = await getUser(id)
   if (!user) notFound()
 
-  // sponsor_admin scope check
   if (role === 'sponsor_admin' && user.sponsorId !== sponsorId) {
     redirect('/dashboard/users')
   }
 
   return (
     <main className="p-6 lg:p-8">
-      <div className="mb-6">
+      <Button variant="ghost" size="sm" asChild className="-ml-2 mb-4">
+        <Link href="/dashboard/users">
+          <ChevronLeft className="size-4" />
+          ผู้ใช้งาน
+        </Link>
+      </Button>
+
+      <div className="mb-6 flex items-center gap-2">
+        <Pencil className="size-5 text-muted-foreground" />
         <h1 className="text-2xl font-semibold">แก้ไขผู้ใช้</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
       </div>
 
-      <div className="max-w-lg space-y-6">
-        {/* Status + Role badges */}
-        <div className="flex flex-wrap gap-2">
-          <Badge variant={user.status === 'active' ? 'secondary' : 'destructive'}>
-            {user.status === 'active' ? 'ใช้งาน' : 'ปิดใช้งาน'}
-          </Badge>
-          <Badge variant="outline">{ROLE_LABELS[user.role]}</Badge>
-          {user.sponsorName && (
-            <Badge variant="outline">{user.sponsorName}</Badge>
-          )}
-        </div>
+      <div className="max-w-lg space-y-4">
+        {/* Profile Header Card */}
+        <Card>
+          <CardContent className="flex items-center gap-4 pt-6">
+            <Avatar className="size-14">
+              <AvatarFallback className="text-lg font-medium">
+                {initials(null, user.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1.5">
+              <p className="font-semibold">{user.email}</p>
+              <div className="flex flex-wrap gap-2">
+                <RoleBadge role={user.role} />
+                <StatusBadge status={user.status} />
+                {user.sponsorName && (
+                  <Badge variant="outline">{user.sponsorName}</Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Edit form */}
-        <EditUserForm
+        {/* Edit form card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Pencil className="size-4" />
+              แก้ไขข้อมูล
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EditUserForm
+              userId={user.userId}
+              defaultValues={{
+                email: user.email,
+                phoneNumber: user.phoneNumber ?? '',
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Toggle status card */}
+        <ToggleUserStatusButton
           userId={user.userId}
-          defaultValues={{ email: user.email, phoneNumber: user.phoneNumber ?? '' }}
+          currentStatus={user.status}
         />
-
-        {/* Disable button — only if currently active */}
-        {user.status === 'active' && (
-          <DisableUserButton userId={user.userId} />
-        )}
       </div>
     </main>
   )
