@@ -57,7 +57,7 @@ export async function listUsers(opts?: {
     .where(opts?.sponsorId ? eq(users.sponsorId, opts.sponsorId) : undefined)
     .orderBy(desc(users.createdAt))
 
-  return rows.map((r) => ({ ...r, sponsorName: r.sponsorName ?? null }))
+  return rows
 }
 
 export async function getUser(
@@ -83,8 +83,7 @@ export async function getUser(
     .where(eq(users.userId, userId))
     .limit(1)
 
-  if (!row) return null
-  return { ...row, sponsorName: row.sponsorName ?? null }
+  return row ?? null
 }
 
 export async function createUser(
@@ -122,7 +121,7 @@ export async function disableUser(
 ): Promise<{ userId: string }> {
   const [row] = await db
     .update(users)
-    .set({ status: 'hidden' })
+    .set({ status: 'inactive' })
     .where(eq(users.userId, userId))
     .returning({ userId: users.userId })
 

@@ -4,7 +4,7 @@ import { ChevronLeft, UserPlus } from 'lucide-react'
 import { auth } from '@/auth'
 import { listSponsors } from '@/db/queries/sponsors'
 import { Button } from '@/components/ui/button'
-import type { UserRole } from '@/lib/rbac'
+import { canManageUsers, type UserRole } from '@/lib/rbac'
 import { NewUserForm } from './new-user-form'
 import type { SponsorRow } from '@/db/queries/sponsors'
 
@@ -14,11 +14,7 @@ export default async function NewUserPage() {
 
   const { role, permissions, sponsorId } = session.user
 
-  const canCreate =
-    permissions.includes('user:manage') ||
-    permissions.includes('user:manage_staff')
-
-  if (!canCreate) redirect('/dashboard/users')
+  if (!canManageUsers({ role, permissions })) redirect('/dashboard/users')
 
   let sponsors: Pick<SponsorRow, 'sponsorId' | 'sponsorName'>[] = []
   if (permissions.includes('user:manage')) {
