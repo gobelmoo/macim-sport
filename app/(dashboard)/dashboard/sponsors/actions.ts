@@ -109,8 +109,28 @@ export async function updateSponsorAction(
   })
 
   revalidatePath('/dashboard/sponsors')
-  revalidatePath(`/dashboard/sponsors/${sponsorId}`)
   redirect('/dashboard/sponsors')
+}
+
+export type ToggleSponsorStatusState = { error?: string } | undefined
+
+export async function toggleSponsorStatusAction(
+  sponsorId: string,
+  newStatus: 'active' | 'inactive',
+  _prevState: ToggleSponsorStatusState,
+): Promise<ToggleSponsorStatusState> {
+  const session = await auth()
+  if (!session?.user) redirect('/sign-in')
+
+  const authz = { role: session.user.role, permissions: session.user.permissions }
+  if (!canAccess(PERMISSIONS.SPONSOR_EDIT, authz)) {
+    return { error: 'คุณไม่มีสิทธิ์แก้ไข Sponsor' }
+  }
+
+  await updateSponsor(sponsorId, { status: newStatus })
+  revalidatePath('/dashboard/sponsors')
+  revalidatePath(`/dashboard/sponsors/${sponsorId}`)
+  return undefined
 }
 
 export type DeleteSponsorState = { message?: string }
