@@ -1,6 +1,7 @@
-import { desc, eq } from 'drizzle-orm'
+import { count, desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { sponsors } from '@/db/schema/sponsors'
+import { events } from '@/db/schema/events'
 import type { serviceTypeEnum } from '@/db/schema/sponsors'
 
 export type SponsorRow = typeof sponsors.$inferSelect
@@ -60,14 +61,16 @@ export async function updateSponsor(
   return row
 }
 
-export async function hideSponsor(
-  sponsorId: string,
-): Promise<{ sponsorId: string }> {
+export async function isSponsorLinkedToEvents(sponsorId: string): Promise<boolean> {
   const [row] = await db
-    .update(sponsors)
-    .set({ status: 'hidden' })
-    .where(eq(sponsors.sponsorId, sponsorId))
-    .returning({ sponsorId: sponsors.sponsorId })
+    .select({ total: count() })
+    .from(events)
+    .where(eq(events.sponsorId, sponsorId))
+    .limit(1)
 
-  return row
+  return (row?.total ?? 0) > 0
+}
+
+export async function deleteSponsor(sponsorId: string): Promise<void> {
+  await db.delete(sponsors).where(eq(sponsors.sponsorId, sponsorId))
 }

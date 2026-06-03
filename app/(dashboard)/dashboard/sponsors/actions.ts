@@ -8,7 +8,8 @@ import { canAccess, PERMISSIONS } from '@/lib/rbac'
 import {
   createSponsor,
   updateSponsor,
-  hideSponsor,
+  isSponsorLinkedToEvents,
+  deleteSponsor,
 } from '@/db/queries/sponsors'
 
 const serviceTypeValues = ['physical_and_digital', 'digital_only'] as const
@@ -109,16 +110,25 @@ export async function updateSponsorAction(
   redirect('/dashboard/sponsors')
 }
 
-export async function hideSponsorAction(sponsorId: string): Promise<void> {
+export type DeleteSponsorState = { message?: string }
+
+export async function deleteSponsorAction(
+  sponsorId: string,
+): Promise<DeleteSponsorState> {
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
 
   const authz = { role: session.user.role, permissions: session.user.permissions }
   if (!canAccess(PERMISSIONS.SPONSOR_EDIT, authz)) {
-    return
+    return { message: 'คุณไม่มีสิทธิ์ลบ Sponsor' }
   }
 
-  await hideSponsor(sponsorId)
+  const linked = await isSponsorLinkedToEvents(sponsorId)
+  if (linked) {
+    return { message: 'ไม่สามารถลบ Sponsor นี้ได้ เนื่องจากมี Event ที่ผูกอยู่' }
+  }
+
+  await deleteSponsor(sponsorId)
   revalidatePath('/dashboard/sponsors')
   redirect('/dashboard/sponsors')
 }

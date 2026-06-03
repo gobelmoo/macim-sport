@@ -1,10 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS } from '@/lib/rbac'
-import { getSponsor } from '@/db/queries/sponsors'
-import { updateSponsorAction, hideSponsorAction } from '../actions'
+import { getSponsor, isSponsorLinkedToEvents } from '@/db/queries/sponsors'
+import { updateSponsorAction } from '../actions'
 import { SponsorForm } from '../_components/sponsor-form'
-import { Button } from '@/components/ui/button'
+import { DeleteSponsorButton } from '../_components/delete-sponsor-button'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -22,23 +22,29 @@ export default async function EditSponsorPage({ params }: Props) {
     redirect('/dashboard')
   }
 
-  const sponsor = await getSponsor(id)
+  const [sponsor, linkedToEvents] = await Promise.all([
+    getSponsor(id),
+    isSponsorLinkedToEvents(id),
+  ])
+
   if (!sponsor) notFound()
 
   const canEdit = canAccess(PERMISSIONS.SPONSOR_EDIT, authz)
-
-  const hideSponsorWithId = hideSponsorAction.bind(null, id)
 
   return (
     <main className="p-6 lg:p-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <h1 className="text-2xl font-semibold">{sponsor.sponsorName}</h1>
-        {canEdit && sponsor.status === 'active' && (
-          <form action={hideSponsorWithId}>
-            <Button type="submit" variant="destructive">
-              ซ่อน Sponsor
-            </Button>
-          </form>
+        {canEdit && !linkedToEvents && (
+          <DeleteSponsorButton
+            sponsorId={sponsor.sponsorId}
+            sponsorName={sponsor.sponsorName}
+          />
+        )}
+        {canEdit && linkedToEvents && (
+          <p className="text-sm text-muted-foreground">
+            ไม่สามารถลบได้ เนื่องจากมี Event ที่ผูกอยู่
+          </p>
         )}
       </div>
 
