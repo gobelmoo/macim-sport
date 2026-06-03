@@ -17,6 +17,9 @@ export const authConfig = {
         return true
       }
 
+      // Self check-in is public — no login required
+      if (path.startsWith('/self-checkin')) return true
+
       if (
         path.startsWith('/dashboard') ||
         path.startsWith('/checkin') ||

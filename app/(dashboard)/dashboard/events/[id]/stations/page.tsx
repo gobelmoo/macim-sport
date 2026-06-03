@@ -14,9 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { signStationToken } from '@/lib/station-token'
 import { createStationAction } from '../actions'
 import { StationForm } from './station-form'
 import { HideStationButton } from './hide-station-button'
+import { StationQrButton } from './_components/station-qr-button'
 
 const STATION_TYPE_LABEL: Record<string, string> = {
   air_recovery: 'Air Recovery',
@@ -61,6 +63,16 @@ export default async function StationsPage({ params }: Props) {
   const stationList = await listStations(id)
   const activeStations = stationList.filter((s) => s.status === 'active')
 
+  // Generate self-checkin tokens for all active stations
+  const vercelUrl = process.env.VERCEL_URL
+  const baseUrl = vercelUrl ? `https://${vercelUrl}` : (process.env.NEXTAUTH_URL ?? 'http://localhost:3000')
+  const stationTokens = await Promise.all(
+    activeStations.map(async (s) => {
+      const token = await signStationToken({ stationId: s.stationId, eventId: id })
+      return { stationId: s.stationId, url: `${baseUrl}/self-checkin/${token}` }
+    })
+  )
+
   const canManage =
     role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
 
@@ -100,6 +112,7 @@ export default async function StationsPage({ params }: Props) {
                 <TableHead>ประเภท</TableHead>
                 <TableHead>Stamp เมื่อ Add Friend</TableHead>
                 <TableHead>สถานะ</TableHead>
+                <TableHead className="text-right">Self Check-in</TableHead>
                 {canManage && <TableHead className="text-right">การดำเนินการ</TableHead>}
               </TableRow>
             </TableHeader>
@@ -128,6 +141,17 @@ export default async function StationsPage({ params }: Props) {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{station.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {(() => {
+                      const t = stationTokens.find(t => t.stationId === station.stationId)
+                      return t ? (
+                        <StationQrButton
+                          stationName={station.stationName}
+                          selfCheckinUrl={t.url}
+                        />
+                      ) : null
+                    })()}
                   </TableCell>
                   {canManage && (
                     <TableCell className="text-right">
