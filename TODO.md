@@ -1,0 +1,160 @@
+# MACIM SPORT — Project Setup TODO
+
+---
+
+## Phase 1: Init Project ✅
+
+- [x] `pnpm create next-app@latest macim-sport --typescript --app --no-tailwind --no-eslint --no-src-dir`
+- [x] copy `pnpm-workspace.yaml` จาก Widely-Backend
+- [x] copy `.gitignore` จาก Widely-Backend
+- [x] copy `tsconfig.json` จาก Widely-Backend
+- [x] copy `next.config.ts` จาก Widely-Backend
+- [x] copy `postcss.config.mjs` จาก Widely-Backend
+- [x] copy `eslint.config.mjs` จาก Widely-Backend
+- [x] copy `vitest.config.ts` จาก Widely-Backend
+- [x] update `package.json` scripts (db:*, test, lint, typecheck)
+
+---
+
+## Phase 2: Install Dependencies ✅
+
+- [x] ติดตั้ง core deps (drizzle-orm, neon, next-auth, bcryptjs, zod, rhf, shadcn utils, etc.)
+- [x] ติดตั้ง devDeps (drizzle-kit, tailwindcss, eslint-config-next, tsx, vitest, dotenv)
+
+---
+
+## Phase 3: UI Foundation ✅
+
+- [x] ติดตั้ง shadcn/ui + `shadcn` runtime + `tw-animate-css`
+- [x] ตั้งค่า `components.json` (style: radix-nova, baseColor: neutral)
+- [x] ติดตั้ง shadcn components (sidebar, button, card, input, label, dropdown-menu, avatar, badge, separator, table, dialog, alert-dialog, form, select, sonner, tooltip, sheet, skeleton, tabs)
+- [x] สร้าง `app/globals.css` — theme สี oklch จาก Widely-Backend
+- [x] สร้าง `app/layout.tsx` (Noto Sans Thai + Geist Mono + ThemeProvider + TooltipProvider + Toaster, lang="th")
+- [x] สร้าง `components/layout/theme-provider.tsx`
+- [x] สร้าง `components/layout/theme-switcher.tsx`
+
+---
+
+## Phase 4: Database Schema ✅
+
+- [x] สร้าง `drizzle.config.ts`
+- [x] สร้าง `db/schema/_common.ts` (idColumn, createdAtColumn, statusEnum)
+- [x] สร้าง `db/schema/sponsors.ts`
+- [x] สร้าง `db/schema/users.ts` (userRoleEnum 5 ค่า)
+- [x] สร้าง `db/schema/events.ts`
+- [x] สร้าง `db/schema/stations.ts`
+- [x] สร้าง `db/schema/athletes.ts` (POST-MVP fields nullable ไว้)
+- [x] สร้าง `db/schema/athlete_event_registrations.ts` (unique: bibNumber+eventId)
+- [x] สร้าง `db/schema/checkins.ts`
+- [x] สร้าง `db/schema/stamps.ts`
+- [x] สร้าง `db/schema/post-mvp.ts` (Tables 9–24 stubs)
+- [x] สร้าง `db/index.ts`
+- [x] สร้าง `db/seed.ts` (owner account + MACIM internal sponsor)
+- [x] สร้าง `.env.example`
+- [x] ตั้งค่า `.env.local` (DATABASE_URL, AUTH_SECRET, SEED_OWNER_EMAIL/PASSWORD)
+- [x] `pnpm db:generate` + apply migration → Neon (24 tables, 8 ENUMs)
+- [x] `pnpm db:seed` → MACIM internal sponsor + super_admin_owner
+
+---
+
+## Phase 5: Auth (Credentials — Email + Password) ✅
+
+- [x] สร้าง `lib/rbac.ts` (ROLES, PERMISSIONS, ROLE_PERMISSIONS, canAccess, getPermissionsForRole)
+- [x] สร้าง `db/queries/authz.ts` (loadSessionAuthz — single round-trip)
+- [x] สร้าง `auth.config.ts` (authorized callback, sign-in page)
+- [x] สร้าง `auth.ts` (Credentials provider, JWT TTL 5 นาที, session callbacks)
+- [x] สร้าง `app/api/auth/[...nextauth]/route.ts`
+- [x] สร้าง `middleware.ts`
+- [x] สร้าง `app/(auth)/sign-in/page.tsx` (email + password form + error state)
+- [x] สร้าง `app/(auth)/sign-in/actions.ts` (signInAction server action)
+- [x] สร้าง `scripts/grant-admin.ts`
+
+---
+
+## Phase 6: RBAC
+
+- [ ] สร้าง `lib/rbac.ts`
+  - `ROLES`: 5 ค่า fixed ENUM
+  - `PERMISSIONS`: ทุก permission ที่ระบบต้องการ
+  - `ROLE_PERMISSIONS`: map แต่ละ Role → permissions (owner/manager = `'*'`)
+  - `canAccess()` helper
+  - Data isolation: sponsor roles ต้องมี `sponsorId` ใน session
+- [ ] extend `next-auth` types ใน `auth.ts`
+  - `session.user`: เพิ่ม `role`, `sponsorId`, `permissions`
+  - `JWT`: เพิ่ม `role`, `sponsorId`, `permissions`, `userValidatedAt`
+- [ ] สร้าง `db/queries/authz.ts`
+  - `loadSessionAuthz(userId)`: ดึง role + sponsorId + permissions ใน round trip เดียว
+
+---
+
+## Phase 7: Dashboard Layout ✅
+
+- [x] สร้าง `lib/utils.ts` (cn, initials, oneParam)
+- [x] สร้าง `lib/nav.ts` (NAV items + filterNav ด้วย anyOf permission)
+- [x] สร้าง `app/(dashboard)/actions.ts` (signOutAction)
+- [x] สร้าง `app/(dashboard)/layout.tsx` (session guard, sponsor_staff → /checkin redirect)
+- [x] สร้าง `components/layout/app-sidebar.tsx` (MACIM SPORT branding)
+- [x] สร้าง `components/layout/nav-main.tsx`
+- [x] สร้าง `components/layout/nav-user.tsx` (role labels ภาษาไทย)
+- [x] สร้าง `app/(dashboard)/dashboard/page.tsx`
+- [x] เปลี่ยน `middleware.ts` → `proxy.ts` (Next.js 16 convention)
+- [x] `pnpm build` — ผ่านสะอาด
+
+---
+
+## Phase 8: Core Pages (MVP) ✅
+
+### Sponsor Management (owner + manager)
+- [x] `/dashboard/sponsors` — รายการ Sponsor
+- [x] `/dashboard/sponsors/new` — สร้าง Sponsor ใหม่
+- [x] `/dashboard/sponsors/[id]` — แก้ไข Sponsor
+
+### Event Management (owner + manager)
+- [x] `/dashboard/events` — รายการ Event
+- [x] `/dashboard/events/new` — สร้าง Event ใหม่
+- [x] `/dashboard/events/[id]` — แก้ไข Event + เปลี่ยน status
+- [x] `/dashboard/events/[id]/stations` — จัดการ Station ในงาน
+- [x] `/dashboard/events/[id]/import` — Import ไฟล์รายชื่อนักกีฬา
+
+### User Management
+- [x] `/dashboard/users` — รายการ User (MACIM admin เห็นทุก Role / sponsor_admin เห็นแค่ staff ตัวเอง)
+- [x] `/dashboard/users/new` — สร้าง User (Role ที่เลือกได้ขึ้นกับ Role ของ creator)
+- [x] `/dashboard/users/[id]` — แก้ไข / disable User
+
+### Reports (ดูตาม scope ของ Role)
+- [x] `/dashboard/reports` — Check-in stats, นักกีฬา, Stamp summary
+
+### Check-in (Tablet — sponsor_staff)
+- [x] `/checkin` — เลือก Event + Station
+- [x] `/checkin/[stationId]` — หน้า Check-in หลัก
+  - กรอก BIB Number
+  - แสดงชื่อ + รูป
+  - บันทึก checkin + stamp
+  - response ≤ 3 วินาที
+
+---
+
+## Phase 9: Environment + Deploy
+
+- [ ] สร้าง `.env.example`
+  ```
+  DATABASE_URL=
+  AUTH_SECRET=
+  AUTH_URL=http://localhost:3000
+  ```
+- [ ] สร้าง `.env.local` จาก `.env.example`
+- [ ] ตั้งค่า Vercel project + link
+- [ ] ตั้งค่า env vars ใน Vercel
+- [ ] deploy preview build ครั้งแรก
+
+---
+
+## Phase 10: Verify
+
+- [ ] login ด้วย owner account ได้
+- [ ] owner สร้าง manager ได้
+- [ ] manager สร้าง sponsor_admin ได้
+- [ ] sponsor_admin สร้าง sponsor_staff ได้
+- [ ] sponsor_staff เข้าได้แค่หน้า `/checkin` เท่านั้น
+- [ ] viewer เข้า `/dashboard/reports` ได้ แต่เข้า `/dashboard/sponsors` ไม่ได้
+- [ ] Check-in flow ครบ 3 กรณี (พบ / ไม่พบ / ลงทะเบียนทันที)
