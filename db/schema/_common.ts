@@ -8,4 +8,4 @@ export const idColumn = () =>
 export const createdAtColumn = () =>
   timestamp({ mode: 'date' }).defaultNow().notNull()
 
-export const statusEnum = pgEnum('status', ['active', 'hidden'])
+export const statusEnum = pgEnum('status', ['active', 'hidden', 'inactive'])

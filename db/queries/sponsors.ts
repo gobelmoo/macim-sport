@@ -18,7 +18,7 @@ export type CreateSponsorData = {
   brandColor?: string | null
 }
 
-export type UpdateSponsorData = Partial<CreateSponsorData> & { status?: 'active' | 'hidden' }
+export type UpdateSponsorData = Partial<CreateSponsorData> & { status?: 'active' | 'hidden' | 'inactive' }
 
 export async function listSponsors(): Promise<SponsorRow[]> {
   return db

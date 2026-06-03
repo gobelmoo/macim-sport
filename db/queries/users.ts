@@ -13,7 +13,7 @@ export type UserListItem = {
   role: UserRole
   sponsorId: string | null
   lineUserId: string | null
-  status: 'active' | 'hidden'
+  status: 'active' | 'hidden' | 'inactive'
   createdAt: Date
   lastLoginAt: Date | null
   sponsorName: string | null

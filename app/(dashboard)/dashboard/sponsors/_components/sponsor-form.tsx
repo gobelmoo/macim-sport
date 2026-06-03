@@ -159,7 +159,7 @@ export function SponsorForm({ action, sponsor, submitLabel }: SponsorFormProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">ใช้งาน</SelectItem>
-                <SelectItem value="hidden">ซ่อน</SelectItem>
+                <SelectItem value="inactive">ไม่ใช้งาน</SelectItem>
               </SelectContent>
             </Select>
           </div>

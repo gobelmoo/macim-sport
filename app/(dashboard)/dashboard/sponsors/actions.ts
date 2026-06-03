@@ -13,7 +13,7 @@ import {
 } from '@/db/queries/sponsors'
 
 const serviceTypeValues = ['physical_and_digital', 'digital_only'] as const
-const statusValues = ['active', 'hidden'] as const
+const statusValues = ['active', 'inactive'] as const
 
 const sponsorSchema = z.object({
   sponsorName: z.string().min(1, 'กรุณากรอกชื่อ Sponsor'),
