@@ -198,7 +198,7 @@ export function EventsTable({ events, canCreate }: Props) {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={'/dashboard/events/' + event.eventId}>
+                      <Link href={`/dashboard/events/${event.eventId}`}>
                         <Pencil className="size-4" />
                       </Link>
                     </Button>
