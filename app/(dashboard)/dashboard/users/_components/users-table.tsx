@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import {
@@ -72,18 +72,12 @@ export function UsersTable({ users }: Props) {
   const hasFilter =
     search !== '' || roleFilter !== 'all' || statusFilter !== 'all'
 
-  // Reset to page 1 whenever filters change
-  useEffect(() => {
-    setPage(1)
-  }, [search, roleFilter, statusFilter])
-
   const filtered = useMemo(() => {
+    const lowerSearch = search.toLowerCase()
     return users.filter((u) => {
-      if (search && !u.email.toLowerCase().includes(search.toLowerCase()))
-        return false
+      if (search && !u.email.toLowerCase().includes(lowerSearch)) return false
       if (roleFilter !== 'all' && u.role !== roleFilter) return false
-      if (statusFilter === 'active' && u.status !== 'active') return false
-      if (statusFilter === 'inactive' && u.status === 'active') return false
+      if (statusFilter !== 'all' && u.status !== statusFilter) return false
       return true
     })
   }, [users, search, roleFilter, statusFilter])
@@ -107,12 +101,12 @@ export function UsersTable({ users }: Props) {
             className="pl-9"
             placeholder="ค้นหา email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
         <Select
           value={roleFilter}
-          onValueChange={(v) => setRoleFilter(v as UserRole | 'all')}
+          onValueChange={(v) => { setRoleFilter(v as UserRole | 'all'); setPage(1) }}
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue />
@@ -127,7 +121,7 @@ export function UsersTable({ users }: Props) {
         </Select>
         <Select
           value={statusFilter}
-          onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+          onValueChange={(v) => { setStatusFilter(v as typeof statusFilter); setPage(1) }}
         >
           <SelectTrigger className="w-[140px]">
             <SelectValue />

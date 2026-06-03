@@ -15,6 +15,42 @@ import {
 } from '@/db/queries/users'
 
 // ---------------------------------------------------------------------------
+// toggleUserStatusAction  (bound: toggleUserStatusAction.bind(null, userId, newStatus))
+// ---------------------------------------------------------------------------
+
+export async function toggleUserStatusAction(
+  userId: string,
+  newStatus: 'active' | 'inactive',
+  _prevState: UserActionState,
+  _formData?: FormData,
+): Promise<UserActionState> {
+  const session = await auth()
+  if (!session?.user) return { error: 'ไม่ได้เข้าสู่ระบบ' }
+
+  if (!canManageUsers(session.user)) {
+    return { error: 'ไม่มีสิทธิ์เปลี่ยนสถานะผู้ใช้' }
+  }
+
+  if (session.user.role === 'sponsor_admin') {
+    const target = await getUser(userId)
+    if (!target) return { error: 'ไม่พบผู้ใช้' }
+    if (target.sponsorId !== session.user.sponsorId) {
+      return { error: 'ไม่มีสิทธิ์เปลี่ยนสถานะผู้ใช้นี้' }
+    }
+  }
+
+  if (newStatus === 'active') {
+    await enableUser(userId)
+  } else {
+    await disableUser(userId)
+  }
+
+  revalidatePath('/dashboard/users')
+  revalidatePath(`/dashboard/users/${userId}`)
+  return { success: true }
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -210,65 +246,3 @@ export async function updateUserAction(
   return { success: true }
 }
 
-// ---------------------------------------------------------------------------
-// disableUserAction
-// ---------------------------------------------------------------------------
-
-export async function disableUserAction(
-  userId: string,
-  _prevState: UserActionState,
-  _formData?: FormData,
-): Promise<UserActionState> {
-  const session = await auth()
-  if (!session?.user) return { error: 'ไม่ได้เข้าสู่ระบบ' }
-
-  if (!canManageUsers(session.user)) {
-    return { error: 'ไม่มีสิทธิ์ปิดใช้งานผู้ใช้' }
-  }
-
-  // Scope check: sponsor_admin can only disable users in their own sponsor
-  if (session.user.role === 'sponsor_admin') {
-    const target = await getUser(userId)
-    if (!target) return { error: 'ไม่พบผู้ใช้' }
-    if (target.sponsorId !== session.user.sponsorId) {
-      return { error: 'ไม่มีสิทธิ์ปิดใช้งานผู้ใช้นี้' }
-    }
-  }
-
-  await disableUser(userId)
-
-  revalidatePath('/dashboard/users')
-  revalidatePath(`/dashboard/users/${userId}`)
-  return { success: true }
-}
-
-// ---------------------------------------------------------------------------
-// enableUserAction
-// ---------------------------------------------------------------------------
-
-export async function enableUserAction(
-  userId: string,
-  _prevState: UserActionState,
-  _formData?: FormData,
-): Promise<UserActionState> {
-  const session = await auth()
-  if (!session?.user) return { error: 'ไม่ได้เข้าสู่ระบบ' }
-
-  if (!canManageUsers(session.user)) {
-    return { error: 'ไม่มีสิทธิ์เปิดใช้งานผู้ใช้' }
-  }
-
-  if (session.user.role === 'sponsor_admin') {
-    const target = await getUser(userId)
-    if (!target) return { error: 'ไม่พบผู้ใช้' }
-    if (target.sponsorId !== session.user.sponsorId) {
-      return { error: 'ไม่มีสิทธิ์เปิดใช้งานผู้ใช้นี้' }
-    }
-  }
-
-  await enableUser(userId)
-
-  revalidatePath('/dashboard/users')
-  revalidatePath(`/dashboard/users/${userId}`)
-  return { success: true }
-}

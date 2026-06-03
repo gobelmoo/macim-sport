@@ -91,16 +91,15 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
 
   const canEdit =
     role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
-  const canManage = canEdit
-  const canFullEdit = canManage && event.status !== 'active'
+  const canFullEdit = canEdit && event.status !== 'active'
 
-  const [stationList, athleteList] = await Promise.all([
+  const [stationList, athleteList, headersList] = await Promise.all([
     listStations(id),
     listAthletesByEvent(id),
+    headers(),
   ])
 
   const activeStations = stationList.filter((s) => s.status === 'active')
-  const headersList = await headers()
   const host = headersList.get('host') ?? 'localhost:3000'
   const protocol = host.startsWith('localhost') ? 'http' : 'https'
   const baseUrl = `${protocol}://${host}`
@@ -171,7 +170,7 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
                 <TableHead>Stamp เมื่อ Add Friend</TableHead>
                 <TableHead>สถานะ</TableHead>
                 <TableHead className="text-right">Self Check-in</TableHead>
-                {canManage && (
+                {canEdit && (
                   <TableHead className="text-right">การดำเนินการ</TableHead>
                 )}
               </TableRow>
@@ -183,6 +182,7 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
                   station.stationId,
                   id,
                 )
+                const selfCheckinUrl = stationTokenMap.get(station.stationId)
                 return (
                   <TableRow
                     key={station.stationId}
@@ -207,17 +207,14 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {(() => {
-                        const selfCheckinUrl = stationTokenMap.get(station.stationId)
-                        return selfCheckinUrl && (
-                          <StationQrButton
-                            stationName={station.stationName}
-                            selfCheckinUrl={selfCheckinUrl}
-                          />
-                        )
-                      })()}
+                      {selfCheckinUrl && (
+                        <StationQrButton
+                          stationName={station.stationName}
+                          selfCheckinUrl={selfCheckinUrl}
+                        />
+                      )}
                     </TableCell>
-                    {canManage && (
+                    {canEdit && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <ToggleStationButton

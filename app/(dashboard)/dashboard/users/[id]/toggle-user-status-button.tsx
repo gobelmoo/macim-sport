@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 import { CheckCircle2, ShieldAlert, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { disableUserAction, enableUserAction } from '../actions'
+import { toggleUserStatusAction } from '../actions'
 
 interface Props {
   userId: string
@@ -13,22 +13,11 @@ interface Props {
 
 export function ToggleUserStatusButton({ userId, currentStatus }: Props) {
   const isActive = currentStatus === 'active'
+  const newStatus = isActive ? 'inactive' : 'active'
+  const boundToggle = toggleUserStatusAction.bind(null, userId, newStatus)
+  const [state, formAction, isPending] = useActionState(boundToggle, undefined)
 
-  const boundDisable = disableUserAction.bind(null, userId)
-  const boundEnable = enableUserAction.bind(null, userId)
-
-  const [disableState, disableAction, isDisablePending] = useActionState(
-    boundDisable,
-    undefined,
-  )
-  const [enableState, enableAction, isEnablePending] = useActionState(
-    boundEnable,
-    undefined,
-  )
-
-  const error =
-    (disableState && 'error' in disableState && disableState.error) ||
-    (enableState && 'error' in enableState && enableState.error)
+  const error = state && 'error' in state ? state.error : null
 
   return (
     <Card>
@@ -63,29 +52,18 @@ export function ToggleUserStatusButton({ userId, currentStatus }: Props) {
               </>
             )}
           </div>
-          {isActive ? (
-            <form action={disableAction}>
-              <Button
-                type="submit"
-                variant="destructive"
-                size="sm"
-                disabled={isDisablePending}
-              >
-                {isDisablePending ? 'กำลังปิด...' : 'ปิดใช้งาน'}
-              </Button>
-            </form>
-          ) : (
-            <form action={enableAction}>
-              <Button
-                type="submit"
-                variant="default"
-                size="sm"
-                disabled={isEnablePending}
-              >
-                {isEnablePending ? 'กำลังเปิด...' : 'เปิดใช้งาน'}
-              </Button>
-            </form>
-          )}
+          <form action={formAction}>
+            <Button
+              type="submit"
+              variant={isActive ? 'destructive' : 'default'}
+              size="sm"
+              disabled={isPending}
+            >
+              {isPending
+                ? isActive ? 'กำลังปิด...' : 'กำลังเปิด...'
+                : isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+            </Button>
+          </form>
         </div>
         {error && (
           <p className="mt-3 text-sm text-destructive">{error}</p>
