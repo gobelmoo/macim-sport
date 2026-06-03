@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
@@ -348,11 +349,13 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
         </div>
       </div>
 
-      <EventTabs
-        infoContent={infoContent}
-        stationsContent={stationsContent}
-        athletesContent={athletesContent}
-      />
+      <Suspense fallback={null}>
+        <EventTabs
+          infoContent={infoContent}
+          stationsContent={stationsContent}
+          athletesContent={athletesContent}
+        />
+      </Suspense>
     </main>
   )
 }
