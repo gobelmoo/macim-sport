@@ -1,7 +1,8 @@
-import { count, desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { sponsors } from '@/db/schema/sponsors'
 import { events } from '@/db/schema/events'
+import { stamps } from '@/db/schema/stamps'
 import type { serviceTypeEnum } from '@/db/schema/sponsors'
 
 export type SponsorRow = typeof sponsors.$inferSelect
@@ -61,14 +62,20 @@ export async function updateSponsor(
   return row
 }
 
-export async function isSponsorLinkedToEvents(sponsorId: string): Promise<boolean> {
-  const [row] = await db
-    .select({ total: count() })
+export async function hasSponsorDependencies(sponsorId: string): Promise<boolean> {
+  const [ev] = await db
+    .select({ one: sql<number>`1` })
     .from(events)
     .where(eq(events.sponsorId, sponsorId))
     .limit(1)
+  if (ev) return true
 
-  return (row?.total ?? 0) > 0
+  const [st] = await db
+    .select({ one: sql<number>`1` })
+    .from(stamps)
+    .where(eq(stamps.sponsorId, sponsorId))
+    .limit(1)
+  return st !== undefined
 }
 
 export async function deleteSponsor(sponsorId: string): Promise<void> {

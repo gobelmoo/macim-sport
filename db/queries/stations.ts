@@ -62,11 +62,10 @@ export async function updateStation(
   return row
 }
 
-export async function toggleStationStatus(
-  stationId: string,
-  currentStatus: (typeof stationStatusEnum.enumValues)[number],
-): Promise<{ stationId: string }> {
-  const nextStatus = currentStatus === 'active' ? 'inactive' : 'active'
+export async function toggleStationStatus(stationId: string): Promise<{ stationId: string }> {
+  const current = await getStation(stationId)
+  if (!current) throw new Error('Station not found')
+  const nextStatus = current.status === 'active' ? 'inactive' : 'active'
   const [row] = await db
     .update(stations)
     .set({ status: nextStatus })

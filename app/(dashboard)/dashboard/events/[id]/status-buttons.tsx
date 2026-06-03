@@ -1,18 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
-import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+import { ConfirmActionButton } from '@/app/_components/confirm-action-button'
 import { updateEventStatusAction } from './actions'
 import type { eventStatusEnum } from '@/db/schema/events'
 
@@ -54,36 +42,17 @@ type StatusButtonsProps = {
 }
 
 export function StatusButtons({ eventId, currentStatus }: StatusButtonsProps) {
-  const [isPending, startTransition] = useTransition()
-
   const cfg = STATUS_CONFIG[currentStatus]
   if (!cfg) return null
 
-  function handleConfirm() {
-    startTransition(async () => {
-      await updateEventStatusAction(eventId, cfg!.next)
-    })
-  }
-
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={isPending}>
-          {isPending ? 'กำลังอัปเดต...' : cfg.label}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{cfg.title}</AlertDialogTitle>
-          <AlertDialogDescription>{cfg.description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm}>
-            {cfg.action}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmActionButton
+      triggerLabel={cfg.label}
+      pendingLabel="กำลังอัปเดต..."
+      title={cfg.title}
+      description={cfg.description}
+      actionLabel={cfg.action}
+      onConfirm={() => updateEventStatusAction(eventId, cfg.next)}
+    />
   )
 }

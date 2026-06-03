@@ -8,7 +8,7 @@ import { canAccess, PERMISSIONS } from '@/lib/rbac'
 import {
   createSponsor,
   updateSponsor,
-  isSponsorLinkedToEvents,
+  hasSponsorDependencies,
   deleteSponsor,
 } from '@/db/queries/sponsors'
 
@@ -123,9 +123,9 @@ export async function deleteSponsorAction(
     return { message: 'คุณไม่มีสิทธิ์ลบ Sponsor' }
   }
 
-  const linked = await isSponsorLinkedToEvents(sponsorId)
+  const linked = await hasSponsorDependencies(sponsorId)
   if (linked) {
-    return { message: 'ไม่สามารถลบ Sponsor นี้ได้ เนื่องจากมี Event ที่ผูกอยู่' }
+    return { message: 'ไม่สามารถลบ Sponsor นี้ได้ เนื่องจากมีข้อมูลที่ผูกอยู่' }
   }
 
   await deleteSponsor(sponsorId)

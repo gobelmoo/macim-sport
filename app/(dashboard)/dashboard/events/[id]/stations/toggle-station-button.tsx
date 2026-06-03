@@ -16,7 +16,7 @@ export function ToggleStationButton({ stationId, eventId, currentStatus }: Props
 
   function handleClick() {
     startTransition(async () => {
-      await toggleStationStatusAction(stationId, eventId, currentStatus)
+      await toggleStationStatusAction(stationId, eventId)
     })
   }
 

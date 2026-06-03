@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { ROLES } from '@/lib/rbac'
-import { deleteDraftEvent, updateEvent, updateEventStatus } from '@/db/queries/events'
+import { deleteDraftEvent, getEvent, updateEvent, updateEventStatus } from '@/db/queries/events'
 import {
   createStation,
   deleteStation,
@@ -13,7 +13,6 @@ import {
   updateStation,
 } from '@/db/queries/stations'
 import type { eventStatusEnum } from '@/db/schema/events'
-import type { stationStatusEnum } from '@/db/schema/stations'
 
 export type ActionState = {
   success?: boolean
@@ -133,10 +132,9 @@ export async function updateStationAction(
 export async function toggleStationStatusAction(
   stationId: string,
   eventId: string,
-  currentStatus: (typeof stationStatusEnum.enumValues)[number],
 ): Promise<void> {
   await assertOwnerOrManager()
-  await toggleStationStatus(stationId, currentStatus)
+  await toggleStationStatus(stationId)
   revalidatePath(`/dashboard/events/${eventId}/stations`)
 }
 
@@ -145,6 +143,8 @@ export async function deleteStationAction(
   eventId: string,
 ): Promise<void> {
   await assertOwnerOrManager()
+  const event = await getEvent(eventId)
+  if (!event || event.status === 'active') throw new Error('ลบ station ไม่ได้เมื่อ event กำลังจัดงาน')
   await deleteStation(stationId)
   revalidatePath(`/dashboard/events/${eventId}/stations`)
 }

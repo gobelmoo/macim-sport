@@ -150,12 +150,15 @@ export default async function StationsPage({ params }: Props) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {stationTokenMap.has(station.stationId) && (
-                        <StationQrButton
-                          stationName={station.stationName}
-                          selfCheckinUrl={stationTokenMap.get(station.stationId)!}
-                        />
-                      )}
+                      {(() => {
+                        const selfCheckinUrl = stationTokenMap.get(station.stationId)
+                        return selfCheckinUrl && (
+                          <StationQrButton
+                            stationName={station.stationName}
+                            selfCheckinUrl={selfCheckinUrl}
+                          />
+                        )
+                      })()}
                     </TableCell>
                     {canManage && (
                       <TableCell className="text-right">
