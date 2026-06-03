@@ -1,4 +1,5 @@
-import { count, eq, inArray } from 'drizzle-orm'
+import { and, count, eq, inArray } from 'drizzle-orm'
+import { stamps } from '@/db/schema/stamps'
 import { db } from '@/db'
 import { athleteEventRegistrations } from '@/db/schema/athlete_event_registrations'
 import { athletes } from '@/db/schema/athletes'
@@ -183,4 +184,56 @@ export async function listAthletesWithCheckinCounts(opts?: {
     .orderBy(athletes.lastName, athletes.firstName)
 
   return rows.map((r) => ({ ...r, checkinCount: Number(r.checkinCount) }))
+}
+
+export interface AthleteEventRow {
+  registrationId: string
+  athleteId: string | null
+  bibNumber: string
+  firstName: string | null
+  lastName: string | null
+  status: 'active' | 'hidden' | 'inactive'
+  registeredAt: Date
+  stampCount: number
+}
+
+export async function listAthletesByEvent(
+  eventId: string,
+): Promise<AthleteEventRow[]> {
+  const rows = await db
+    .select({
+      registrationId: athleteEventRegistrations.registrationId,
+      athleteId: athleteEventRegistrations.athleteId,
+      bibNumber: athleteEventRegistrations.bibNumber,
+      status: athleteEventRegistrations.status,
+      registeredAt: athleteEventRegistrations.registeredAt,
+      firstName: athletes.firstName,
+      lastName: athletes.lastName,
+      stampCount: count(stamps.stampId),
+    })
+    .from(athleteEventRegistrations)
+    .leftJoin(
+      athletes,
+      eq(athleteEventRegistrations.athleteId, athletes.athleteId),
+    )
+    .leftJoin(
+      stamps,
+      and(
+        eq(stamps.athleteId, athleteEventRegistrations.athleteId),
+        eq(stamps.eventId, eventId),
+      ),
+    )
+    .where(eq(athleteEventRegistrations.eventId, eventId))
+    .groupBy(
+      athleteEventRegistrations.registrationId,
+      athleteEventRegistrations.athleteId,
+      athleteEventRegistrations.bibNumber,
+      athleteEventRegistrations.status,
+      athleteEventRegistrations.registeredAt,
+      athletes.firstName,
+      athletes.lastName,
+    )
+    .orderBy(athleteEventRegistrations.bibNumber)
+
+  return rows.map((r) => ({ ...r, stampCount: Number(r.stampCount) }))
 }
