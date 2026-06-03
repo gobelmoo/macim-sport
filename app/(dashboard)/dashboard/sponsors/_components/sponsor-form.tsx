@@ -148,6 +148,22 @@ export function SponsorForm({ action, sponsor, submitLabel }: SponsorFormProps) 
             <p className="text-sm text-destructive">{state.errors.brandColor[0]}</p>
           )}
         </div>
+
+        {/* Status — edit mode only */}
+        {sponsor && (
+          <div className="space-y-1.5">
+            <Label htmlFor="status">สถานะ</Label>
+            <Select name="status" defaultValue={sponsor.status}>
+              <SelectTrigger id="status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">ใช้งาน</SelectItem>
+                <SelectItem value="hidden">ซ่อน</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Is Internal */}

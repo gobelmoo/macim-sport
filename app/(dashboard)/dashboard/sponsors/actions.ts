@@ -13,6 +13,7 @@ import {
 } from '@/db/queries/sponsors'
 
 const serviceTypeValues = ['physical_and_digital', 'digital_only'] as const
+const statusValues = ['active', 'hidden'] as const
 
 const sponsorSchema = z.object({
   sponsorName: z.string().min(1, 'กรุณากรอกชื่อ Sponsor'),
@@ -23,6 +24,7 @@ const sponsorSchema = z.object({
   contactEmail: z.email('รูปแบบอีเมลไม่ถูกต้อง'),
   logoUrl: z.string().url('รูปแบบ URL ไม่ถูกต้อง').optional().or(z.literal('')),
   brandColor: z.string().optional(),
+  status: z.enum(statusValues).optional(),
 })
 
 export type SponsorActionState = {
@@ -92,6 +94,7 @@ export async function updateSponsorAction(
     contactEmail: formData.get('contactEmail') as string,
     logoUrl: (formData.get('logoUrl') as string) || undefined,
     brandColor: (formData.get('brandColor') as string) || undefined,
+    status: (formData.get('status') as string) || undefined,
   }
 
   const parsed = sponsorSchema.safeParse(raw)

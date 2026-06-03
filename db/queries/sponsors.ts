@@ -18,13 +18,12 @@ export type CreateSponsorData = {
   brandColor?: string | null
 }
 
-export type UpdateSponsorData = Partial<CreateSponsorData>
+export type UpdateSponsorData = Partial<CreateSponsorData> & { status?: 'active' | 'hidden' }
 
 export async function listSponsors(): Promise<SponsorRow[]> {
   return db
     .select()
     .from(sponsors)
-    .where(eq(sponsors.status, 'active'))
     .orderBy(desc(sponsors.createdAt))
 }
 
