@@ -20,6 +20,9 @@ export interface ActiveEvent {
   eventName: string
   startDate: string
   endDate: string
+  status: 'published' | 'active'
+  eventLogoUrl: string | null
+  description: string | null
 }
 
 export interface RegistrationRow {
@@ -79,16 +82,19 @@ export async function linkAthleteLineId(athleteId: string, lineUserId: string): 
 // ─── Events ────────────────────────────────────────────────────────────────
 
 export async function getActiveEvents(): Promise<ActiveEvent[]> {
-  return db
+  return (await db
     .select({
       eventId: events.eventId,
       eventName: events.eventName,
       startDate: events.startDate,
       endDate: events.endDate,
+      status: events.status,
+      eventLogoUrl: events.eventLogoUrl,
+      description: events.description,
     })
     .from(events)
     .where(inArray(events.status, ['published', 'active']))
-    .orderBy(events.startDate)
+    .orderBy(events.startDate)) as ActiveEvent[]
 }
 
 export async function getRegisteredEventIds(athleteId: string): Promise<string[]> {
