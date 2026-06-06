@@ -29,8 +29,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const workerRef = useRef<import('tesseract.js').Worker | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isProcessingRef = useRef(false)
-  const lastBibRef = useRef<string | null>(null)
-  const consecutiveRef = useRef(0)
+  const historyRef = useRef<string[]>([])
   const [uiState, setUiState] = useState<UIState>({ status: 'scanning' })
   const [countdown, setCountdown] = useState<number | null>(null)
   const [debug, setDebug] = useState<{ text: string; confidence: number; dim: string } | null>(null)
@@ -74,8 +73,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
       await ensureWorker()
 
-      lastBibRef.current = null
-      consecutiveRef.current = 0
+      historyRef.current = []
 
       const runScan = async () => {
         const video = videoRef.current
@@ -110,22 +108,23 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
             dim: `${w}×${h}`,
           })
 
-          if (raw.length >= 2 && raw.length <= 5) {
-            if (raw === lastBibRef.current) {
-              consecutiveRef.current += 1
-            } else {
-              lastBibRef.current = raw
-              consecutiveRef.current = 1
-            }
+          if (raw.length >= 2 && raw.length <= 10) {
+            const history = historyRef.current
+            history.push(raw)
+            if (history.length > 5) history.shift()
 
-            if (consecutiveRef.current >= 1) {
+            // majority vote: same value 3+ times in last 5 frames
+            const counts: Record<string, number> = {}
+            for (const v of history) counts[v] = (counts[v] ?? 0) + 1
+            const [topVal, topCount] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+
+            if (topCount >= 3) {
               stopCamera()
-              setUiState({ status: 'confirming', bib: raw })
+              setUiState({ status: 'confirming', bib: topVal })
               return
             }
           } else {
-            lastBibRef.current = null
-            consecutiveRef.current = 0
+            historyRef.current = []
           }
         } finally {
           isProcessingRef.current = false
