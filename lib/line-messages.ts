@@ -61,7 +61,7 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
           action: {
             type: 'uri',
             label: 'ดูรายละเอียด',
-            uri: `${appBase}/liff/event/${encodeURIComponent(event.eventId)}`,
+            uri: `${appBase}/event/${encodeURIComponent(event.eventId)}`,
           },
         },
       ],
