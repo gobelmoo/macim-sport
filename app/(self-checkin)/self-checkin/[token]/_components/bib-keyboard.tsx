@@ -55,13 +55,13 @@ export function BibKeyboard({ value, onChange, onConfirm, onBack }: BibKeyboardP
       ))}
 
       {/* Letter pad A–Z */}
-      <div className="flex flex-wrap justify-center gap-1.5">
+      <div className="flex flex-wrap justify-center gap-2">
         {LETTERS.map((l) => (
           <button
             key={l}
             type="button"
             onClick={() => press(l)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border bg-background text-base font-medium active:bg-muted select-none"
+            className="flex h-12 w-12 items-center justify-center rounded-xl border bg-background text-lg font-semibold active:bg-muted select-none"
           >
             {l}
           </button>

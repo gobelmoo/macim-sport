@@ -14,6 +14,7 @@ interface Props {
 }
 
 type UIState =
+  | { status: 'idle' }
   | { status: 'scanning' }
   | { status: 'confirming'; bib: string }
   | { status: 'manual'; value: string }
@@ -30,7 +31,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isProcessingRef = useRef(false)
   const historyRef = useRef<string[]>([])
-  const [uiState, setUiState] = useState<UIState>({ status: 'scanning' })
+  const [uiState, setUiState] = useState<UIState>({ status: 'idle' })
   const [countdown, setCountdown] = useState<number | null>(null)
   const [debug, setDebug] = useState<{ text: string; confidence: number; dim: string } | null>(null)
 
@@ -45,6 +46,12 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
       videoRef.current.srcObject = null
     }
   }, [])
+
+  const resetToIdle = useCallback(() => {
+    stopCamera()
+    setUiState({ status: 'idle' })
+    setDebug(null)
+  }, [stopCamera])
 
   const openManual = useCallback(() => {
     stopCamera()
@@ -63,6 +70,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
   const startCamera = useCallback(async () => {
     setUiState({ status: 'scanning' })
+    setDebug(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 1280 } },
@@ -118,7 +126,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
             history.push(raw)
             if (history.length > 5) history.shift()
 
-            // majority vote: same value 3+ times in last 5 frames
             const counts: Record<string, number> = {}
             for (const v of history) counts[v] = (counts[v] ?? 0) + 1
             const [topVal, topCount] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
@@ -152,21 +159,16 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     }
   }, [stopCamera, ensureWorker])
 
-  // Auto-start on mount
-  useEffect(() => {
-    startCamera()
-  }, [startCamera])
-
-  // Auto-reset countdown after result
+  // Auto-reset to idle after result
   useEffect(() => {
     if (uiState.status !== 'result') { setCountdown(null); return }
     setCountdown(AUTO_RESET_SECONDS)
     const tick = setInterval(() => {
       setCountdown((prev) => (prev !== null && prev > 1 ? prev - 1 : null))
     }, 1000)
-    const reset = setTimeout(() => startCamera(), AUTO_RESET_SECONDS * 1000)
+    const reset = setTimeout(resetToIdle, AUTO_RESET_SECONDS * 1000)
     return () => { clearInterval(tick); clearTimeout(reset) }
-  }, [uiState.status, startCamera])
+  }, [uiState.status, resetToIdle])
 
   // Auto-open keyboard after 15s of scanning without result
   useEffect(() => {
@@ -199,6 +201,23 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
       </div>
 
       <div className="w-full max-w-sm">
+
+        {uiState.status === 'idle' && (
+          <div className="flex flex-col items-center gap-4">
+            <div className="rounded-2xl border-2 border-dashed border-muted-foreground/30 p-10 text-center w-full">
+              <p className="text-5xl mb-4">📷</p>
+              <p className="text-xl font-semibold">พร้อมสแกน BIB</p>
+              <p className="mt-1 text-sm text-muted-foreground">กดปุ่มเพื่อเริ่ม</p>
+            </div>
+            <Button size="lg" className="w-full h-16 text-xl" onClick={startCamera}>
+              สแกน BIB
+            </Button>
+            <Button size="lg" variant="outline" className="w-full h-14 text-base" onClick={openManual}>
+              ⌨️ กรอกหมายเลขเอง
+            </Button>
+          </div>
+        )}
+
         {uiState.status === 'scanning' && (
           <div className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl bg-black aspect-[3/4]">
@@ -229,13 +248,14 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 <p className="text-muted-foreground">รอผล OCR...</p>
               )}
             </div>
-            <button
-              type="button"
-              className="text-sm text-muted-foreground underline underline-offset-2 text-center py-1"
-              onClick={openManual}
-            >
-              กรอกหมายเลข BIB เอง
-            </button>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-12" onClick={resetToIdle}>
+                ยกเลิก
+              </Button>
+              <Button variant="outline" className="flex-1 h-12" onClick={openManual}>
+                ⌨️ กรอกเอง
+              </Button>
+            </div>
           </div>
         )}
 
@@ -248,23 +268,28 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
           />
         )}
 
-        {uiState.status === 'confirming' && (
-          <div className="flex flex-col gap-6 text-center">
-            <div className="rounded-2xl border-2 border-yellow-500 bg-yellow-500/10 p-8">
-              <p className="text-lg text-muted-foreground">พบหมายเลข BIB</p>
-              <p className="mt-2 font-mono text-6xl font-bold">{uiState.bib}</p>
-              <p className="mt-3 text-sm text-muted-foreground">ยืนยันหมายเลขนี้ถูกต้องหรือไม่?</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 h-14" onClick={startCamera}>
-                สแกนใหม่
-              </Button>
-              <Button className="flex-1 h-14 text-lg" onClick={() => handleConfirm(uiState.bib)}>
-                ยืนยัน
-              </Button>
-            </div>
+      </div>
+
+      {/* confirming — full width */}
+      {uiState.status === 'confirming' && (
+        <div className="w-full px-4 flex flex-col gap-6 text-center">
+          <div className="rounded-2xl border-2 border-yellow-500 bg-yellow-500/10 p-10">
+            <p className="text-2xl text-muted-foreground">พบหมายเลข BIB</p>
+            <p className="mt-3 font-mono text-8xl font-bold">{uiState.bib}</p>
+            <p className="mt-4 text-lg text-muted-foreground">ยืนยันหมายเลขนี้ถูกต้องหรือไม่?</p>
           </div>
-        )}
+          <div className="flex gap-4">
+            <Button variant="outline" className="flex-1 h-16 text-lg" onClick={startCamera}>
+              สแกนใหม่
+            </Button>
+            <Button className="flex-1 h-16 text-xl" onClick={() => handleConfirm(uiState.bib)}>
+              ยืนยัน
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-sm">
 
         {uiState.status === 'submitting' && (
           <div className="text-center py-12">
@@ -277,11 +302,11 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
             <CheckinResultCard
               result={uiState.result}
               bib={uiState.bib}
-              onReset={startCamera}
+              onReset={resetToIdle}
             />
             {countdown !== null && (
               <p className="text-center text-sm text-muted-foreground">
-                กลับสู่การสแกนใน {countdown} วินาที...
+                กลับหน้าหลักใน {countdown} วินาที...
               </p>
             )}
           </div>
@@ -295,16 +320,13 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
               <Button className="w-full" onClick={startCamera}>
                 ลองอีกครั้ง
               </Button>
-              <button
-                type="button"
-                className="text-sm text-muted-foreground underline underline-offset-2"
-                onClick={openManual}
-              >
-                กรอกหมายเลข BIB เอง
-              </button>
+              <Button variant="outline" className="w-full" onClick={openManual}>
+                ⌨️ กรอกหมายเลขเอง
+              </Button>
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

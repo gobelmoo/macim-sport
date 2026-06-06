@@ -11,14 +11,13 @@ interface Props {
 export function CheckinResultCard({ result, bib, onReset }: Props) {
   if (!result.found) {
     return (
-      <div className="rounded-2xl border-2 border-destructive bg-destructive/10 p-8 text-center">
-        <p className="text-3xl font-bold text-destructive">ไม่พบข้อมูล</p>
-        <p className="mt-2 text-xl text-muted-foreground">BIB: {bib}</p>
-        {result.error && <p className="mt-2 text-sm text-muted-foreground">{result.error}</p>}
+      <div className="rounded-2xl border-2 border-muted-foreground/20 bg-muted/40 p-8 text-center">
+        <p className="text-3xl font-bold">เข้าใช้บริการได้เลย</p>
+        <p className="mt-2 text-lg text-muted-foreground">BIB: {bib}</p>
         <div className="mt-5 rounded-xl border border-[#06C755]/40 bg-[#06C755]/10 px-5 py-4">
-          <p className="text-lg font-semibold text-[#06C755]">เป็นเพื่อนกับเราใน LINE</p>
+          <p className="text-base font-semibold text-[#06C755]">รับสิทธิ์ประโยชน์ภายหลัง</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            เพื่อลงทะเบียนและรับสิทธิ์ประโยชน์ภายหลัง
+            เพิ่มเพื่อนใน LINE เพื่อลงทะเบียนย้อนหลัง
           </p>
         </div>
         <ResetButton onReset={onReset} />
