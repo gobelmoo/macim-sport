@@ -178,8 +178,13 @@ export function EventsTable({ events, canCreate }: Props) {
               {paginated.map((event) => (
                 <TableRow key={event.eventId}>
                   <TableCell>
-                    <div className="flex size-8 items-center justify-center rounded-full bg-muted">
-                      <Calendar className="size-4 text-muted-foreground" />
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted overflow-hidden">
+                      {event.eventLogoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={event.eventLogoUrl} alt="" className="size-8 object-cover" />
+                      ) : (
+                        <Calendar className="size-4 text-muted-foreground" />
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{event.eventName}</TableCell>

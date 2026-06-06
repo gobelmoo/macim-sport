@@ -2,10 +2,12 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { ChevronLeft, Calendar, Pencil, MapPin, User, Building2, CalendarDays } from 'lucide-react'
+import sanitizeHtml from 'sanitize-html'
+import { ChevronLeft, Calendar, Pencil, MapPin, User, Building2, CalendarDays, AlignLeft, FileText, Images } from 'lucide-react'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS, ROLES } from '@/lib/rbac'
 import { getEvent } from '@/db/queries/events'
+import { listGalleryImages } from '@/db/queries/event_gallery_images'
 import { listStations } from '@/db/queries/stations'
 import { listAthletesByEvent } from '@/db/queries/athletes'
 import { signStationToken } from '@/lib/station-token'
@@ -71,9 +73,10 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
   const canEdit = role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
   const canFullEdit = canEdit && event.status !== 'active'
 
-  const [stationList, athleteList, headersList] = await Promise.all([
+  const [stationList, athleteList, galleryImages, headersList] = await Promise.all([
     listStations(id),
     listAthletesByEvent(id),
+    listGalleryImages(id),
     headers(),
   ])
 
@@ -285,8 +288,13 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
       <Card className="mb-6">
         <CardContent className="flex items-center justify-between gap-4 pt-6">
           <div className="flex items-center gap-4">
-            <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-              <Calendar className="size-7 text-muted-foreground" />
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted overflow-hidden">
+              {event.eventLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={event.eventLogoUrl} alt="" className="size-14 object-cover" />
+              ) : (
+                <Calendar className="size-7 text-muted-foreground" />
+              )}
             </div>
             <div className="space-y-1.5">
               <p className="text-lg font-semibold">{event.eventName}</p>
@@ -322,6 +330,73 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
 
       {/* Info — always visible */}
       <div className="mb-6">{infoContent}</div>
+
+      {/* Short Description */}
+      {event.description && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlignLeft className="size-4" />
+              คำอธิบายสั้น
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Long Description */}
+      {event.longDescription && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="size-4" />
+              รายละเอียดงาน
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(event.longDescription, {
+                  allowedTags: ['p','strong','em','h2','h3','ul','ol','li','a','br'],
+                  allowedAttributes: { a: ['href','target','rel'] },
+                }),
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gallery */}
+      {galleryImages.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Images className="size-4" />
+              แกลเลอรี ({galleryImages.length} รูป)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {galleryImages.map((img) => (
+                <div key={img.imageId} className="space-y-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.imageUrl}
+                    alt={img.caption ?? ''}
+                    className="aspect-square w-full rounded-md object-cover"
+                  />
+                  {img.caption && (
+                    <p className="text-xs text-muted-foreground truncate">{img.caption}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs: Stations + Athletes */}
       <Suspense fallback={null}>
