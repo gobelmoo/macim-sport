@@ -19,6 +19,9 @@ export type EventRow = {
   status: (typeof eventStatusEnum.enumValues)[number]
   createdAt: Date
   sponsorName: string
+  eventLogoUrl: string | null
+  description: string | null
+  longDescription: string | null
 }
 
 export type CreateEventData = {
@@ -30,54 +33,60 @@ export type CreateEventData = {
   organizerName: string
   startDate: string
   endDate: string
+  eventLogoUrl?: string | null
+  description?: string | null
+  longDescription?: string | null
 }
 
 export type UpdateEventData = Partial<CreateEventData>
 
+export type EventDetailRow = {
+  eventId: string
+  eventName: string
+  eventLocation: string
+  eventCity: string
+  eventType: (typeof eventTypeEnum.enumValues)[number]
+  organizerName: string
+  startDate: string
+  endDate: string
+  status: (typeof eventStatusEnum.enumValues)[number]
+  eventLogoUrl: string | null
+  description: string | null
+  longDescription: string | null
+}
+
+const EVENT_SELECT_FIELDS = {
+  eventId: events.eventId,
+  sponsorId: events.sponsorId,
+  eventName: events.eventName,
+  eventLocation: events.eventLocation,
+  eventCity: events.eventCity,
+  eventType: events.eventType,
+  organizerName: events.organizerName,
+  startDate: events.startDate,
+  endDate: events.endDate,
+  isPublic: events.isPublic,
+  hasParticipantImport: events.hasParticipantImport,
+  status: events.status,
+  createdAt: events.createdAt,
+  sponsorName: sponsors.sponsorName,
+  eventLogoUrl: events.eventLogoUrl,
+  description: events.description,
+  longDescription: events.longDescription,
+}
+
 export async function listEvents(sponsorId?: string): Promise<EventRow[]> {
-  const rows = await db
-    .select({
-      eventId: events.eventId,
-      sponsorId: events.sponsorId,
-      eventName: events.eventName,
-      eventLocation: events.eventLocation,
-      eventCity: events.eventCity,
-      eventType: events.eventType,
-      organizerName: events.organizerName,
-      startDate: events.startDate,
-      endDate: events.endDate,
-      isPublic: events.isPublic,
-      hasParticipantImport: events.hasParticipantImport,
-      status: events.status,
-      createdAt: events.createdAt,
-      sponsorName: sponsors.sponsorName,
-    })
+  return db
+    .select(EVENT_SELECT_FIELDS)
     .from(events)
     .innerJoin(sponsors, eq(events.sponsorId, sponsors.sponsorId))
     .where(sponsorId ? eq(events.sponsorId, sponsorId) : undefined)
     .orderBy(desc(events.startDate))
-
-  return rows
 }
 
 export async function getEvent(eventId: string): Promise<EventRow | undefined> {
   const [row] = await db
-    .select({
-      eventId: events.eventId,
-      sponsorId: events.sponsorId,
-      eventName: events.eventName,
-      eventLocation: events.eventLocation,
-      eventCity: events.eventCity,
-      eventType: events.eventType,
-      organizerName: events.organizerName,
-      startDate: events.startDate,
-      endDate: events.endDate,
-      isPublic: events.isPublic,
-      hasParticipantImport: events.hasParticipantImport,
-      status: events.status,
-      createdAt: events.createdAt,
-      sponsorName: sponsors.sponsorName,
-    })
+    .select(EVENT_SELECT_FIELDS)
     .from(events)
     .innerJoin(sponsors, eq(events.sponsorId, sponsors.sponsorId))
     .where(eq(events.eventId, eventId))
@@ -86,9 +95,30 @@ export async function getEvent(eventId: string): Promise<EventRow | undefined> {
   return row
 }
 
-export async function createEvent(
-  data: CreateEventData,
-): Promise<{ eventId: string }> {
+export async function getEventDetail(eventId: string): Promise<EventDetailRow | undefined> {
+  const [row] = await db
+    .select({
+      eventId: events.eventId,
+      eventName: events.eventName,
+      eventLocation: events.eventLocation,
+      eventCity: events.eventCity,
+      eventType: events.eventType,
+      organizerName: events.organizerName,
+      startDate: events.startDate,
+      endDate: events.endDate,
+      status: events.status,
+      eventLogoUrl: events.eventLogoUrl,
+      description: events.description,
+      longDescription: events.longDescription,
+    })
+    .from(events)
+    .where(eq(events.eventId, eventId))
+    .limit(1)
+
+  return row
+}
+
+export async function createEvent(data: CreateEventData): Promise<{ eventId: string }> {
   const [row] = await db
     .insert(events)
     .values(data)
