@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { headers } from 'next/headers'
@@ -9,7 +8,6 @@ import { canAccess, PERMISSIONS, ROLES } from '@/lib/rbac'
 import { getEvent } from '@/db/queries/events'
 import { listGalleryImages } from '@/db/queries/event_gallery_images'
 import { listStations } from '@/db/queries/stations'
-import { listAthletesByEvent } from '@/db/queries/athletes'
 import { signStationToken } from '@/lib/station-token'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,7 +22,6 @@ import {
 } from '@/components/ui/table'
 import { StatusButtons } from './status-buttons'
 import { DeleteEventButton } from './delete-event-button'
-import { EventTabs } from './_components/event-tabs'
 import { CopyLiffLinkButton } from './_components/copy-liff-link-button'
 import { AddStationDialog } from './stations/add-station-dialog'
 import { ToggleStationButton } from './stations/toggle-station-button'
@@ -48,12 +45,10 @@ const STATION_TYPE_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> 
 
 type Props = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ tab?: string }>
 }
 
-export default async function EventDetailPage({ params, searchParams }: Props) {
+export default async function EventDetailPage({ params }: Props) {
   const { id } = await params
-  await searchParams
 
   const session = await auth()
   if (!session?.user) redirect('/sign-in')
@@ -73,9 +68,8 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
   const canEdit = role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
   const canFullEdit = canEdit && event.status !== 'active'
 
-  const [stationList, athleteList, galleryImages, headersList] = await Promise.all([
+  const [stationList, galleryImages, headersList] = await Promise.all([
     listStations(id),
-    listAthletesByEvent(id),
     listGalleryImages(id),
     headers(),
   ])
@@ -216,62 +210,6 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
     </div>
   )
 
-  const athletesContent = (
-    <div>
-      {athleteList.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
-          <p>ยังไม่มีนักกีฬา</p>
-          {canEdit && (
-            <Button variant="outline" size="sm" className="mt-4" asChild>
-              <Link href={`/dashboard/events/${id}/import`}>นำเข้าข้อมูลนักกีฬา</Link>
-            </Button>
-          )}
-        </div>
-      ) : (
-        <>
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">{athleteList.length} คน</p>
-            {canEdit && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/dashboard/events/${id}/import`}>นำเข้าข้อมูล</Link>
-              </Button>
-            )}
-          </div>
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>BIB</TableHead>
-                  <TableHead>ชื่อ-นามสกุล</TableHead>
-                  <TableHead>สถานะ</TableHead>
-                  <TableHead className="text-right">Stamps</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {athleteList.map((a) => (
-                  <TableRow key={a.registrationId}>
-                    <TableCell className="font-mono">{a.bibNumber}</TableCell>
-                    <TableCell>
-                      {a.firstName && a.lastName
-                        ? `${a.firstName} ${a.lastName}`
-                        : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={a.status === 'active' ? 'default' : 'outline'}>
-                        {a.status === 'active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{a.stampCount}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </>
-      )}
-    </div>
-  )
-
   // ─── Page ──────────────────────────────────────────────────────────────────
 
   return (
@@ -398,13 +336,7 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
         </Card>
       )}
 
-      {/* Tabs: Stations + Athletes */}
-      <Suspense fallback={null}>
-        <EventTabs
-          stationsContent={stationsContent}
-          athletesContent={athletesContent}
-        />
-      </Suspense>
+      {stationsContent}
     </main>
   )
 }
