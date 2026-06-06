@@ -3,6 +3,7 @@ import { MapPin, Calendar, User } from 'lucide-react'
 import sanitizeHtml from 'sanitize-html'
 import { getEventDetail } from '@/db/queries/events'
 import { listGalleryImages } from '@/db/queries/event_gallery_images'
+import { EventCta } from './_components/event-cta'
 
 type Props = { params: Promise<{ eventId: string }> }
 
@@ -25,7 +26,8 @@ export default async function LiffEventDetailPage({ params }: Props) {
       })
     : null
 
-  const liffRegisterUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?eventId=${eventId}`
+  const liffId = process.env.NEXT_PUBLIC_LIFF_ID!
+  const liffBase = `https://liff.line.me/${liffId}`
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,12 +100,12 @@ export default async function LiffEventDetailPage({ params }: Props) {
 
         {/* CTA */}
         <div className="pt-4">
-          <a
-            href={liffRegisterUrl}
-            className="flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 text-base font-semibold text-primary-foreground"
-          >
-            ลงทะเบียน
-          </a>
+          <EventCta
+            eventId={eventId}
+            eventStatus={event.status as 'published' | 'active' | 'closed'}
+            liffId={liffId}
+            liffBase={liffBase}
+          />
         </div>
       </div>
     </div>
