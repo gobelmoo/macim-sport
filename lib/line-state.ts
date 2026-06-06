@@ -12,6 +12,7 @@ import {
 } from '@/lib/line-messages'
 
 const LIFF_BASE = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`
+const APP_BASE = (process.env.AUTH_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
 export function isValidBib(bib: string): boolean {
   return /^[A-Za-z0-9\-]{1,10}$/.test(bib)
@@ -41,7 +42,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
 
     if (registeredWithBib.length > 0) {
       await replyMessage(replyToken, [
-        athleteSummaryFlex(existingAthlete.firstName, registeredWithBib, available, LIFF_BASE),
+        athleteSummaryFlex(existingAthlete.firstName, registeredWithBib, available, LIFF_BASE, APP_BASE),
       ])
       return
     }
@@ -51,7 +52,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
       return
     }
 
-    await replyMessage(replyToken, [welcomeBackMessage(existingAthlete.firstName, available, LIFF_BASE)])
+    await replyMessage(replyToken, [welcomeBackMessage(existingAthlete.firstName, available, LIFF_BASE, APP_BASE)])
     return
   }
 
@@ -60,7 +61,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
     return
   }
 
-  await replyMessage(replyToken, [welcomeNewMessage(allActive, LIFF_BASE)])
+  await replyMessage(replyToken, [welcomeNewMessage(allActive, LIFF_BASE, APP_BASE)])
 }
 
 export async function handleText(
