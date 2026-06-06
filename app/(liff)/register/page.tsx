@@ -44,10 +44,15 @@ export default function RegisterPage() {
   const [dobMonth, setDobMonth] = useState('')
   const [dobYear, setDobYear] = useState('') // BE year string
 
-  const dobCe =
-    dobDay && dobMonth && dobYear
-      ? `${String(parseInt(dobYear) - 543).padStart(4, '0')}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`
-      : ''
+  const dobCe = (() => {
+    if (!dobDay || !dobMonth || !dobYear) return ''
+    const ceYear = parseInt(dobYear) - 543
+    const month = parseInt(dobMonth)
+    const day = parseInt(dobDay)
+    const date = new Date(ceYear, month - 1, day)
+    if (date.getFullYear() !== ceYear || date.getMonth() + 1 !== month || date.getDate() !== day) return ''
+    return `${String(ceYear).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  })()
 
   const [state, action, pending] = useActionState(registerViaLine, null)
 
@@ -151,7 +156,7 @@ export default function RegisterPage() {
         <div>
           <h1 className="text-2xl font-bold">{eventInfo?.eventName ?? 'ลงทะเบียน'}</h1>
           {eventInfo?.description && (
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-sm leading-relaxed">
               {eventInfo.description}
             </p>
           )}
