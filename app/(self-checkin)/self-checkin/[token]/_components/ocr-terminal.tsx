@@ -110,7 +110,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
             dim: `${w}×${h}`,
           })
 
-          if (raw.length >= 2 && raw.length <= 5 && data.confidence > 70) {
+          if (raw.length >= 2 && raw.length <= 5) {
             if (raw === lastBibRef.current) {
               consecutiveRef.current += 1
             } else {
