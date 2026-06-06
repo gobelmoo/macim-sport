@@ -23,6 +23,7 @@ import {
 import { StatusButtons } from './status-buttons'
 import { DeleteEventButton } from './delete-event-button'
 import { EventTabs } from './_components/event-tabs'
+import { CopyLiffLinkButton } from './_components/copy-liff-link-button'
 import { AddStationDialog } from './stations/add-station-dialog'
 import { ToggleStationButton } from './stations/toggle-station-button'
 import { DeleteStationButton } from './stations/delete-station-button'
@@ -305,6 +306,9 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
                 <DeleteEventButton eventId={event.eventId} />
               )}
               <StatusButtons eventId={event.eventId} currentStatus={event.status} />
+              {(event.status === 'published' || event.status === 'active') && (
+                <CopyLiffLinkButton eventId={event.eventId} />
+              )}
               <Button size="sm" asChild>
                 <Link href={`/dashboard/events/${id}/edit`}>
                   <Pencil className="size-4" />
