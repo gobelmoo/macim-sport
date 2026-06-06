@@ -29,17 +29,17 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { EventRow } from '@/db/queries/events'
-import { EventStatusBadge, EventTypeBadge } from './event-badges'
+import { EventStatusBadge, EventTypeBadge, STATUS_LABELS } from './event-badges'
 
 const PAGE_SIZE = 20
 
 const STATUS_OPTIONS = [
   { value: 'all',       label: 'ทุกสถานะ' },
-  { value: 'draft',     label: 'ร่าง' },
-  { value: 'published', label: 'เผยแพร่' },
-  { value: 'active',    label: 'เปิดลงทะเบียน' },
-  { value: 'closed',    label: 'ปิด' },
-  { value: 'archived',  label: 'เก็บถาวร' },
+  { value: 'draft',     label: STATUS_LABELS.draft },
+  { value: 'published', label: STATUS_LABELS.published },
+  { value: 'active',    label: STATUS_LABELS.active },
+  { value: 'closed',    label: STATUS_LABELS.closed },
+  { value: 'archived',  label: STATUS_LABELS.archived },
 ] as const
 
 const TYPE_OPTIONS = [
@@ -56,7 +56,7 @@ interface Props {
 
 export function EventsTable({ events, canCreate }: Props) {
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published' | 'active' | 'closed' | 'archived'>('all')
+  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_OPTIONS)[number]['value']>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'run' | 'triathlon' | 'other'>('all')
   const [page, setPage] = useState(1)
 

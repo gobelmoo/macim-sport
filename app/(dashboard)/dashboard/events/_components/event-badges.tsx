@@ -34,6 +34,10 @@ const TYPE_CONFIG: Record<EventType, { label: string; icon: LucideIcon }> = {
   other:     { label: 'อื่นๆ',     icon: Tag },
 }
 
+export const STATUS_LABELS = Object.fromEntries(
+  Object.entries(STATUS_CONFIG).map(([k, v]) => [k, v.label])
+) as Record<EventStatus, string>
+
 export function EventStatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status as EventStatus]
   if (!cfg) return <Badge variant="outline">{status}</Badge>
