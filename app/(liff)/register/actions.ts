@@ -7,14 +7,44 @@ import {
   getAthleteByLineUserId,
   getEventById,
   insertAthleteConsent,
+  getRegistrationByAthleteAndEvent,
+  updateAthleteProfile,
+  updateRegistrationBib,
 } from '@/db/queries/line'
 import { successMessage } from '@/lib/line-messages'
 import { isValidBib } from '@/lib/line-state'
 
 export type RegisterState =
   | null
-  | { ok: true; firstName: string; bib: string; eventName: string }
+  | { ok: true; firstName: string; bib: string; eventName: string; updated: boolean }
   | { ok: false; error: string }
+
+export async function fetchAthleteProfile(
+  idToken: string,
+  eventId: string,
+): Promise<{
+  firstName: string
+  lastName: string
+  dateOfBirth: string
+  gender: string
+  existingBib: string | null
+} | null> {
+  try {
+    const lineUserId = await verifyLiffIdToken(idToken)
+    const athlete = await getAthleteByLineUserId(lineUserId)
+    if (!athlete) return null
+    const reg = await getRegistrationByAthleteAndEvent(athlete.athleteId, eventId)
+    return {
+      firstName: athlete.firstName,
+      lastName: athlete.lastName,
+      dateOfBirth: athlete.dateOfBirth,
+      gender: athlete.gender,
+      existingBib: reg?.bibNumber ?? null,
+    }
+  } catch {
+    return null
+  }
+}
 
 export async function registerViaLine(
   _prev: RegisterState,
@@ -22,7 +52,7 @@ export async function registerViaLine(
 ): Promise<RegisterState> {
   const liffIdToken = formData.get('liffIdToken') as string
   const eventId = formData.get('eventId') as string
-  const bib = (formData.get('bib') as string).trim()
+  const bib = (formData.get('bib') as string).trim().toUpperCase()
   const firstName = (formData.get('firstName') as string).trim()
   const lastName = (formData.get('lastName') as string).trim()
   const dateOfBirth = formData.get('dateOfBirth') as string
@@ -51,36 +81,52 @@ export async function registerViaLine(
   if (!event) return { ok: false, error: 'ไม่พบงาน' }
 
   try {
-    const existing = await getAthleteByLineUserId(lineUserId)
+    const existingAthlete = await getAthleteByLineUserId(lineUserId)
 
-    if (existing) {
+    if (existingAthlete) {
+      const existingReg = await getRegistrationByAthleteAndEvent(existingAthlete.athleteId, eventId)
+
+      if (existingReg) {
+        // Already registered for this event — update profile + BIB (no uniqueness check)
+        await updateAthleteProfile(existingAthlete.athleteId, { firstName, lastName, dateOfBirth, gender })
+        await updateRegistrationBib(existingAthlete.athleteId, eventId, bib)
+        return { ok: true, updated: true, firstName, bib, eventName: event.eventName }
+      }
+
+      // Returning athlete, new event — create registration + update profile
       await createRegistrationForExistingAthlete({
-        athleteId: existing.athleteId,
+        athleteId: existingAthlete.athleteId,
         eventId,
         bibNumber: bib,
       })
-    } else {
-      const { athleteId } = await createAthleteAndRegistration({
-        lineUserId,
-        eventId,
-        bibNumber: bib,
-        firstName,
-        lastName,
-        dateOfBirth,
-        gender,
-      })
-      await insertAthleteConsent(athleteId)
+      await updateAthleteProfile(existingAthlete.athleteId, { firstName, lastName, dateOfBirth, gender })
+      // fall through to push
+      try {
+        await pushMessage(lineUserId, [successMessage(firstName, bib, event.eventName)])
+      } catch {
+        console.error('[registerViaLine] pushMessage failed for', lineUserId)
+      }
+      return { ok: true, updated: false, firstName, bib, eventName: event.eventName }
     }
+
+    // New athlete
+    const { athleteId } = await createAthleteAndRegistration({
+      lineUserId,
+      eventId,
+      bibNumber: bib,
+      firstName,
+      lastName,
+      dateOfBirth,
+      gender,
+    })
+    await insertAthleteConsent(athleteId)
+    try {
+      await pushMessage(lineUserId, [successMessage(firstName, bib, event.eventName)])
+    } catch {
+      console.error('[registerViaLine] pushMessage failed for', lineUserId)
+    }
+    return { ok: true, updated: false, firstName, bib, eventName: event.eventName }
   } catch {
     return { ok: false, error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }
   }
-
-  // Push success message after DB writes succeed; don't fail registration if push fails
-  try {
-    await pushMessage(lineUserId, [successMessage(firstName, bib, event.eventName)])
-  } catch {
-    console.error('[registerViaLine] pushMessage failed for', lineUserId)
-  }
-
-  return { ok: true, firstName, bib, eventName: event.eventName }
 }

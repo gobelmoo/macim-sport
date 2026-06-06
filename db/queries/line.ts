@@ -193,3 +193,49 @@ export async function getEventById(eventId: string) {
     .limit(1)
   return rows[0] ?? null
 }
+
+export async function getRegistrationByAthleteAndEvent(
+  athleteId: string,
+  eventId: string,
+): Promise<{ registrationId: string; bibNumber: string } | null> {
+  const rows = await db
+    .select({
+      registrationId: athleteEventRegistrations.registrationId,
+      bibNumber: athleteEventRegistrations.bibNumber,
+    })
+    .from(athleteEventRegistrations)
+    .where(
+      and(
+        eq(athleteEventRegistrations.athleteId, athleteId),
+        eq(athleteEventRegistrations.eventId, eventId),
+      ),
+    )
+    .limit(1)
+  return rows[0] ?? null
+}
+
+export async function updateAthleteProfile(
+  athleteId: string,
+  data: { firstName: string; lastName: string; dateOfBirth: string; gender: 'male' | 'female' | 'other' },
+): Promise<void> {
+  await db
+    .update(athletes)
+    .set({ firstName: data.firstName, lastName: data.lastName, dateOfBirth: data.dateOfBirth, gender: data.gender })
+    .where(eq(athletes.athleteId, athleteId))
+}
+
+export async function updateRegistrationBib(
+  athleteId: string,
+  eventId: string,
+  bibNumber: string,
+): Promise<void> {
+  await db
+    .update(athleteEventRegistrations)
+    .set({ bibNumber })
+    .where(
+      and(
+        eq(athleteEventRegistrations.athleteId, athleteId),
+        eq(athleteEventRegistrations.eventId, eventId),
+      ),
+    )
+}
