@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { performSelfCheckin } from '../actions'
 import { CheckinResultCard } from '@/app/_components/checkin-result-card'
 import type { CheckinResult } from '@/app/(checkin)/checkin/[stationId]/types'
@@ -16,6 +17,7 @@ type UIState =
   | { status: 'idle' }
   | { status: 'scanning' }
   | { status: 'confirming'; bib: string }
+  | { status: 'manual'; value: string }
   | { status: 'submitting'; bib: string }
   | { status: 'result'; result: CheckinResult; bib: string }
   | { status: 'error'; message: string }
@@ -25,35 +27,39 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const workerRef = useRef<import('tesseract.js').Worker | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isProcessingRef = useRef(false)
+  const lastBibRef = useRef<string | null>(null)
+  const consecutiveRef = useRef(0)
   const [uiState, setUiState] = useState<UIState>({ status: 'idle' })
+  const [debugInfo, setDebugInfo] = useState<{ text: string; confidence: number; videoDim: string } | null>(null)
 
   const stopCamera = useCallback(() => {
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
+    if (intervalRef.current) { clearTimeout(intervalRef.current as unknown as ReturnType<typeof setTimeout>); intervalRef.current = null }
+    isProcessingRef.current = false
     if (videoRef.current?.srcObject) {
       ;(videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop())
       videoRef.current.srcObject = null
     }
   }, [])
 
-  // Create Tesseract worker once on first startCamera and keep it alive
   const ensureWorker = useCallback(async () => {
     if (workerRef.current) return
     const { createWorker } = await import('tesseract.js')
     workerRef.current = await createWorker('eng', 1, { logger: () => {} })
     await workerRef.current.setParameters({
       tessedit_char_whitelist: '0123456789',
-      tessedit_pageseg_mode: '7' as never, // single line
+      tessedit_pageseg_mode: '7' as never,
     })
   }, [])
 
   const startCamera = useCallback(async () => {
     setUiState({ status: 'scanning' })
+    setDebugInfo(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 } },
       })
 
-      // Guard: if ref unmounted between await and here, release stream immediately
       if (!videoRef.current) {
         stream.getTracks().forEach((t) => t.stop())
         return
@@ -64,44 +70,80 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
       await ensureWorker()
 
-      // Scan loop every 600ms
-      intervalRef.current = setInterval(async () => {
+      lastBibRef.current = null
+      consecutiveRef.current = 0
+
+      const runScan = async () => {
         const video = videoRef.current
         const canvas = canvasRef.current
         const worker = workerRef.current
         if (!video || !canvas || !worker) return
-        if (video.readyState < 2) return
+        if (video.readyState < 2) { scheduleNext(); return }
+        if (isProcessingRef.current) { scheduleNext(); return }
 
-        const ctx = canvas.getContext('2d')
-        if (!ctx) return
+        isProcessingRef.current = true
+        try {
+          const ctx = canvas.getContext('2d')
+          if (!ctx) { scheduleNext(); return }
 
-        const w = video.videoWidth
-        const h = video.videoHeight
-        const cropH = Math.floor(h * 0.3)
-        const cropY = Math.floor(h * 0.35)
+          const w = video.videoWidth
+          const h = video.videoHeight
+          const cropH = Math.floor(h * 0.3)
+          const cropY = Math.floor(h * 0.35)
 
-        // Only reset canvas dimensions when they actually change
-        if (canvas.width !== w || canvas.height !== cropH) {
-          canvas.width = w
-          canvas.height = cropH
+          if (canvas.width !== w || canvas.height !== cropH) {
+            canvas.width = w
+            canvas.height = cropH
+          }
+          ctx.drawImage(video, 0, cropY, w, cropH, 0, 0, w, cropH)
+
+          const { data } = await worker.recognize(canvas)
+          const raw = data.text.replace(/\D/g, '').trim()
+
+          setDebugInfo({
+            text: raw || '(ไม่พบ)',
+            confidence: Math.round(data.confidence),
+            videoDim: `${w}×${h}`,
+          })
+
+          if (raw.length >= 2 && raw.length <= 5 && data.confidence > 70) {
+            if (raw === lastBibRef.current) {
+              consecutiveRef.current += 1
+            } else {
+              lastBibRef.current = raw
+              consecutiveRef.current = 1
+            }
+
+            if (consecutiveRef.current >= 2) {
+              stopCamera()
+              setUiState({ status: 'confirming', bib: raw })
+              return
+            }
+          } else {
+            lastBibRef.current = null
+            consecutiveRef.current = 0
+          }
+        } finally {
+          isProcessingRef.current = false
         }
-        ctx.drawImage(video, 0, cropY, w, cropH, 0, 0, w, cropH)
+        scheduleNext()
+      }
 
-        const { data } = await worker.recognize(canvas)
-        const raw = data.text.replace(/\D/g, '').trim()
+      const scheduleNext = () => {
+        if (intervalRef.current !== null) return
+        intervalRef.current = setTimeout(() => {
+          intervalRef.current = null
+          runScan()
+        }, 600) as unknown as ReturnType<typeof setInterval>
+      }
 
-        if (raw.length >= 1 && raw.length <= 5 && data.confidence > 70) {
-          stopCamera()
-          setUiState({ status: 'confirming', bib: raw })
-        }
-      }, 600)
+      scheduleNext()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'ไม่สามารถเปิดกล้องได้'
       setUiState({ status: 'error', message: msg })
     }
   }, [stopCamera, ensureWorker])
 
-  // Terminate worker only on unmount
   useEffect(() => {
     return () => {
       stopCamera()
@@ -118,6 +160,12 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
   function reset() {
     setUiState({ status: 'idle' })
+    setDebugInfo(null)
+  }
+
+  function openManual() {
+    stopCamera()
+    setUiState({ status: 'manual', value: '' })
   }
 
   return (
@@ -141,6 +189,13 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
             <Button size="lg" className="w-full h-14 text-lg" onClick={startCamera}>
               เปิดกล้อง
             </Button>
+            <button
+              type="button"
+              className="text-sm text-muted-foreground underline underline-offset-2"
+              onClick={openManual}
+            >
+              กรอกหมายเลข BIB เอง
+            </button>
           </div>
         )}
 
@@ -160,11 +215,67 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 <div className="flex-[0.35] bg-black/40" />
               </div>
             </div>
-            <canvas ref={canvasRef} className="hidden" />
+
+            {/* Debug: แสดง canvas crop ที่ส่งให้ OCR */}
+            <div className="rounded-xl border bg-muted/50 p-3 text-xs space-y-1">
+              <p className="font-semibold text-muted-foreground">Debug — ภาพที่ OCR เห็น</p>
+              <canvas ref={canvasRef} className="w-full rounded border" />
+              {debugInfo ? (
+                <>
+                  <p>กล้อง: <span className="font-mono">{debugInfo.videoDim}</span></p>
+                  <p>อ่านได้: <span className="font-mono font-bold">{debugInfo.text}</span></p>
+                  <p>confidence: <span className="font-mono">{debugInfo.confidence}%</span></p>
+                </>
+              ) : (
+                <p className="text-muted-foreground">รอผล OCR...</p>
+              )}
+            </div>
+
             <Button variant="outline" size="lg" className="w-full"
               onClick={() => { stopCamera(); reset() }}>
               ยกเลิก
             </Button>
+            <button
+              type="button"
+              className="text-sm text-muted-foreground underline underline-offset-2 text-center"
+              onClick={openManual}
+            >
+              กรอกหมายเลข BIB เอง
+            </button>
+          </div>
+        )}
+
+        {uiState.status === 'manual' && (
+          <div className="flex flex-col gap-6">
+            <div className="rounded-2xl border-2 border-dashed border-muted-foreground/30 p-8 text-center">
+              <p className="text-lg font-medium mb-4">กรอกหมายเลข BIB</p>
+              <Input
+                type="number"
+                inputMode="numeric"
+                placeholder="เช่น 1001"
+                className="text-center text-2xl h-14 font-mono"
+                value={uiState.value}
+                onChange={(e) => setUiState({ status: 'manual', value: e.target.value.replace(/\D/g, '') })}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 h-14" onClick={reset}>ยกเลิก</Button>
+              <Button
+                className="flex-1 h-14 text-lg"
+                disabled={uiState.value.length < 1}
+                onClick={() => handleConfirm(uiState.value)}
+              >
+                ยืนยัน
+              </Button>
+            </div>
+            <button
+              type="button"
+              className="text-sm text-muted-foreground underline underline-offset-2 text-center"
+              onClick={startCamera}
+            >
+              กลับไปสแกน
+            </button>
           </div>
         )}
 
