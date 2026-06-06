@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -20,6 +21,8 @@ type TiptapEditorProps = {
 }
 
 export function TiptapEditor({ name, defaultValue }: TiptapEditorProps) {
+  const [content, setContent] = useState(defaultValue ?? '')
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -27,6 +30,9 @@ export function TiptapEditor({ name, defaultValue }: TiptapEditorProps) {
     ],
     content: defaultValue ?? '',
     immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      setContent(editor.getHTML())
+    },
   })
 
   if (!editor) return null
@@ -99,7 +105,7 @@ export function TiptapEditor({ name, defaultValue }: TiptapEditorProps) {
         className="prose prose-sm max-w-none min-h-[140px] p-3 focus-within:outline-none"
       />
 
-      <input type="hidden" name={name} value={editor.getHTML()} />
+      <input type="hidden" name={name} value={content} />
     </div>
   )
 }
