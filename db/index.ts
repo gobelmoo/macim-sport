@@ -4,6 +4,7 @@ import * as athletes from './schema/athletes'
 import * as athleteEventRegistrations from './schema/athlete_event_registrations'
 import * as checkins from './schema/checkins'
 import * as events from './schema/events'
+import * as eventGalleryImages from './schema/event_gallery_images'
 import * as postMvp from './schema/post-mvp'
 import * as sponsors from './schema/sponsors'
 import * as stamps from './schema/stamps'
@@ -25,6 +26,7 @@ export const db = drizzle(sql, {
     ...sponsors,
     ...users,
     ...events,
+    ...eventGalleryImages,
     ...stations,
     ...athletes,
     ...athleteEventRegistrations,

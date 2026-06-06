@@ -31,6 +31,9 @@ export const events = pgTable('events', {
   isPublic: boolean().default(false).notNull(),
   hasParticipantImport: boolean().default(false).notNull(),
   status: eventStatusEnum().default('draft').notNull(),
+  eventLogoUrl: text(),
+  description: text(),
+  longDescription: text(),
   createdAt: createdAtColumn(),
 }, (t) => [
   index('events_sponsor_id_idx').on(t.sponsorId),
