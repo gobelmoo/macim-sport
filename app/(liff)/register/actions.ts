@@ -46,6 +46,24 @@ export async function fetchAthleteProfile(
   }
 }
 
+export async function fetchEventInfo(eventId: string): Promise<{
+  eventName: string
+  eventLogoUrl: string | null
+  description: string | null
+} | null> {
+  try {
+    const event = await getEventById(eventId)
+    if (!event) return null
+    return {
+      eventName: event.eventName,
+      eventLogoUrl: event.eventLogoUrl,
+      description: event.description,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function registerViaLine(
   _prev: RegisterState,
   formData: FormData,

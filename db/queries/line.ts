@@ -193,7 +193,12 @@ export async function createRegistrationForExistingAthlete(data: {
 
 export async function getEventById(eventId: string) {
   const rows = await db
-    .select({ eventId: events.eventId, eventName: events.eventName })
+    .select({
+      eventId: events.eventId,
+      eventName: events.eventName,
+      eventLogoUrl: events.eventLogoUrl,
+      description: events.description,
+    })
     .from(events)
     .where(eq(events.eventId, eventId))
     .limit(1)
