@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from 'drizzle-orm'
+import { and, count, desc, eq, inArray } from 'drizzle-orm'
 import { stamps } from '@/db/schema/stamps'
 import { db } from '@/db'
 import { athleteEventRegistrations } from '@/db/schema/athlete_event_registrations'
@@ -97,12 +97,35 @@ export async function getAthleteCheckinCount(
 
 export interface AthleteWithCheckinCount extends AthleteRow {
   checkinCount: number
+  latestEventId: string | null
+  latestEventName: string | null
 }
 
-/**
- * Lists athletes with their total check-in count in a single efficient query
- * using a left join + aggregation rather than N+1 calls to getAthleteCheckinCount.
- */
+async function fetchLatestEventPerAthlete(
+  athleteIds: string[],
+): Promise<Map<string, { eventId: string; eventName: string }>> {
+  if (athleteIds.length === 0) return new Map()
+
+  const rows = await db
+    .select({
+      athleteId: athleteEventRegistrations.athleteId,
+      eventId: events.eventId,
+      eventName: events.eventName,
+    })
+    .from(athleteEventRegistrations)
+    .innerJoin(events, eq(athleteEventRegistrations.eventId, events.eventId))
+    .where(inArray(athleteEventRegistrations.athleteId, athleteIds))
+    .orderBy(desc(athleteEventRegistrations.registeredAt))
+
+  const map = new Map<string, { eventId: string; eventName: string }>()
+  for (const r of rows) {
+    if (r.athleteId && !map.has(r.athleteId)) {
+      map.set(r.athleteId, { eventId: r.eventId, eventName: r.eventName })
+    }
+  }
+  return map
+}
+
 export async function listAthletesWithCheckinCounts(opts?: {
   sponsorId?: string
 }): Promise<AthleteWithCheckinCount[]> {
@@ -132,32 +155,40 @@ export async function listAthletesWithCheckinCounts(opts?: {
 
     if (athleteIds.length === 0) return []
 
-    const rows = await db
-      .select({
-        athleteId: athletes.athleteId,
-        firstName: athletes.firstName,
-        lastName: athletes.lastName,
-        gender: athletes.gender,
-        dateOfBirth: athletes.dateOfBirth,
-        lineUserId: athletes.lineUserId,
-        createdAt: athletes.createdAt,
-        checkinCount: count(checkins.checkinId),
-      })
-      .from(athletes)
-      .leftJoin(checkins, eq(checkins.athleteId, athletes.athleteId))
-      .where(inArray(athletes.athleteId, athleteIds))
-      .groupBy(
-        athletes.athleteId,
-        athletes.firstName,
-        athletes.lastName,
-        athletes.gender,
-        athletes.dateOfBirth,
-        athletes.lineUserId,
-        athletes.createdAt,
-      )
-      .orderBy(athletes.lastName, athletes.firstName)
+    const [rows, latestEventMap] = await Promise.all([
+      db
+        .select({
+          athleteId: athletes.athleteId,
+          firstName: athletes.firstName,
+          lastName: athletes.lastName,
+          gender: athletes.gender,
+          dateOfBirth: athletes.dateOfBirth,
+          lineUserId: athletes.lineUserId,
+          createdAt: athletes.createdAt,
+          checkinCount: count(checkins.checkinId),
+        })
+        .from(athletes)
+        .leftJoin(checkins, eq(checkins.athleteId, athletes.athleteId))
+        .where(inArray(athletes.athleteId, athleteIds))
+        .groupBy(
+          athletes.athleteId,
+          athletes.firstName,
+          athletes.lastName,
+          athletes.gender,
+          athletes.dateOfBirth,
+          athletes.lineUserId,
+          athletes.createdAt,
+        )
+        .orderBy(athletes.lastName, athletes.firstName),
+      fetchLatestEventPerAthlete(athleteIds),
+    ])
 
-    return rows.map((r) => ({ ...r, checkinCount: Number(r.checkinCount) }))
+    return rows.map((r) => ({
+      ...r,
+      checkinCount: Number(r.checkinCount),
+      latestEventId: latestEventMap.get(r.athleteId)?.eventId ?? null,
+      latestEventName: latestEventMap.get(r.athleteId)?.eventName ?? null,
+    }))
   }
 
   const rows = await db
@@ -184,7 +215,14 @@ export async function listAthletesWithCheckinCounts(opts?: {
     )
     .orderBy(athletes.lastName, athletes.firstName)
 
-  return rows.map((r) => ({ ...r, checkinCount: Number(r.checkinCount) }))
+  const latestEventMap = await fetchLatestEventPerAthlete(rows.map((r) => r.athleteId))
+
+  return rows.map((r) => ({
+    ...r,
+    checkinCount: Number(r.checkinCount),
+    latestEventId: latestEventMap.get(r.athleteId)?.eventId ?? null,
+    latestEventName: latestEventMap.get(r.athleteId)?.eventName ?? null,
+  }))
 }
 
 export interface AthleteEventRow {

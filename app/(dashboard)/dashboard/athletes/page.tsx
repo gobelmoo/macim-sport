@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import { auth } from '@/auth'
@@ -71,6 +72,7 @@ export default async function AthletesPage() {
                 <TableHead>เพศ</TableHead>
                 <TableHead>วันเกิด</TableHead>
                 <TableHead>LINE</TableHead>
+                <TableHead>Event ล่าสุด</TableHead>
                 <TableHead className="text-right">Check-in</TableHead>
               </TableRow>
             </TableHeader>
@@ -107,6 +109,18 @@ export default async function AthletesPage() {
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {athlete.latestEventId ? (
+                      <Link
+                        href={`/dashboard/events/${athlete.latestEventId}`}
+                        className="hover:underline text-foreground"
+                      >
+                        {athlete.latestEventName}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right font-mono">
