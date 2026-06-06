@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
         ContentType: file.type,
       }),
     )
-  } catch {
+  } catch (err) {
+    console.error('[R2 upload error]', err)
     return NextResponse.json({ error: 'Upload to storage failed' }, { status: 500 })
   }
 
