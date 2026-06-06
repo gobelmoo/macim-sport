@@ -86,7 +86,7 @@ export async function updateEventAction(
   }
 
   await updateEvent(eventId, parsed.data)
-  revalidatePath(`/dashboard/events/${eventId}`)
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
   return {}
 }
 
@@ -96,7 +96,7 @@ export async function updateEventStatusAction(
 ): Promise<void> {
   await assertOwnerOrManager()
   await updateEventStatus(eventId, newStatus)
-  revalidatePath(`/dashboard/events/${eventId}`)
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
 }
 
 export async function createStationAction(
@@ -118,8 +118,8 @@ export async function createStationAction(
   }
 
   await createStation({ eventId, ...parsed.data })
-  revalidatePath(`/dashboard/events/${eventId}/stations`)
-  redirect(`/dashboard/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  return { success: true }
 }
 
 export async function updateStationAction(
@@ -142,7 +142,7 @@ export async function updateStationAction(
   }
 
   await updateStation(stationId, parsed.data)
-  revalidatePath(`/dashboard/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
   return { success: true }
 }
 
@@ -152,18 +152,17 @@ export async function toggleStationStatusAction(
 ): Promise<void> {
   await assertOwnerOrManager()
   await toggleStationStatus(stationId)
-  revalidatePath(`/dashboard/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
 }
 
 export async function deleteStationAction(
   stationId: string,
   eventId: string,
 ): Promise<void> {
-  await assertOwnerOrManager()
-  const event = await getEvent(eventId)
+  const [, event] = await Promise.all([assertOwnerOrManager(), getEvent(eventId)])
   if (!event || event.status === 'active') throw new Error('ลบ station ไม่ได้เมื่อ event กำลังจัดงาน')
   await deleteStation(stationId)
-  revalidatePath(`/dashboard/events/${eventId}/stations`)
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
 }
 
 export async function deleteEventAction(eventId: string): Promise<void> {
