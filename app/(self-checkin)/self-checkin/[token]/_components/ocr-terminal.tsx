@@ -16,6 +16,7 @@ interface Props {
 type UIState =
   | { status: 'idle' }
   | { status: 'scanning' }
+  | { status: 'timeout-dialog' }
   | { status: 'confirming'; bib: string }
   | { status: 'manual'; value: string }
   | { status: 'submitting'; bib: string }
@@ -55,6 +56,11 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const openManual = useCallback(() => {
     stopCamera()
     setUiState({ status: 'manual', value: '' })
+  }, [stopCamera])
+
+  const openTimeoutDialog = useCallback(() => {
+    stopCamera()
+    setUiState({ status: 'timeout-dialog' })
   }, [stopCamera])
 
   const ensureWorker = useCallback(async () => {
@@ -169,12 +175,12 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     return () => { clearInterval(tick); clearTimeout(reset) }
   }, [uiState.status, resetToIdle])
 
-  // Auto-open keyboard after 15s of scanning without result
+  // Show timeout dialog after 15s of scanning without result
   useEffect(() => {
     if (uiState.status !== 'scanning') return
-    const t = setTimeout(openManual, 15_000)
+    const t = setTimeout(openTimeoutDialog, 15_000)
     return () => clearTimeout(t)
-  }, [uiState.status, openManual])
+  }, [uiState.status, openTimeoutDialog])
 
   // Terminate worker on unmount
   useEffect(() => {
@@ -255,6 +261,24 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 ⌨️ กรอกเอง
               </Button>
             </div>
+          </div>
+        )}
+
+        {uiState.status === 'timeout-dialog' && (
+          <div className="flex flex-col gap-4 text-center py-4">
+            <div className="rounded-2xl border-2 border-amber-500 bg-amber-500/10 p-8">
+              <p className="text-5xl mb-3">📷</p>
+              <p className="text-xl font-bold">อ่าน BIB ไม่ได้</p>
+              <p className="mt-2 text-muted-foreground">
+                กล้องอ่านหมายเลขไม่ชัด ลองวาง BIB ให้ตรงกรอบแล้วสแกนใหม่ หรือกรอกเลขเอง
+              </p>
+            </div>
+            <Button size="lg" className="w-full h-14 text-lg" onClick={startCamera}>
+              สแกนใหม่
+            </Button>
+            <Button size="lg" variant="outline" className="w-full h-14 text-base" onClick={openManual}>
+              ⌨️ กรอกหมายเลขเอง
+            </Button>
           </div>
         )}
 
