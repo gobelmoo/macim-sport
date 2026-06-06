@@ -50,7 +50,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const resetToIdle = useCallback(() => {
     stopCamera()
     setUiState({ status: 'idle' })
-    setDebug(null)
   }, [stopCamera])
 
   const openManual = useCallback(() => {
@@ -200,7 +199,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
         <p className="mt-1 text-sm text-muted-foreground">Self Check-in</p>
       </div>
 
-      <div className="w-full max-w-sm">
+      <div className={uiState.status === 'confirming' ? 'w-full px-4' : 'w-full max-w-sm'}>
 
         {uiState.status === 'idle' && (
           <div className="flex flex-col items-center gap-4">
@@ -268,28 +267,23 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
           />
         )}
 
-      </div>
-
-      {/* confirming — full width */}
-      {uiState.status === 'confirming' && (
-        <div className="w-full px-4 flex flex-col gap-6 text-center">
-          <div className="rounded-2xl border-2 border-yellow-500 bg-yellow-500/10 p-10">
-            <p className="text-2xl text-muted-foreground">พบหมายเลข BIB</p>
-            <p className="mt-3 font-mono text-8xl font-bold">{uiState.bib}</p>
-            <p className="mt-4 text-lg text-muted-foreground">ยืนยันหมายเลขนี้ถูกต้องหรือไม่?</p>
+        {uiState.status === 'confirming' && (
+          <div className="flex flex-col gap-6 text-center">
+            <div className="rounded-2xl border-2 border-yellow-500 bg-yellow-500/10 p-10">
+              <p className="text-2xl text-muted-foreground">พบหมายเลข BIB</p>
+              <p className="mt-3 font-mono text-8xl font-bold">{uiState.bib}</p>
+              <p className="mt-4 text-lg text-muted-foreground">ยืนยันหมายเลขนี้ถูกต้องหรือไม่?</p>
+            </div>
+            <div className="flex gap-4">
+              <Button variant="outline" className="flex-1 h-16 text-lg" onClick={startCamera}>
+                สแกนใหม่
+              </Button>
+              <Button className="flex-1 h-16 text-xl" onClick={() => handleConfirm(uiState.bib)}>
+                ยืนยัน
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-4">
-            <Button variant="outline" className="flex-1 h-16 text-lg" onClick={startCamera}>
-              สแกนใหม่
-            </Button>
-            <Button className="flex-1 h-16 text-xl" onClick={() => handleConfirm(uiState.bib)}>
-              ยืนยัน
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <div className="w-full max-w-sm">
+        )}
 
         {uiState.status === 'submitting' && (
           <div className="text-center py-12">

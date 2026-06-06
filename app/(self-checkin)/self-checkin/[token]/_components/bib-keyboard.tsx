@@ -42,14 +42,15 @@ export function BibKeyboard({ value, onChange, onConfirm, onBack }: BibKeyboardP
       {DIGIT_ROWS.map((row, ri) => (
         <div key={ri} className="grid grid-cols-6 gap-2">
           {row.map((key) => (
-            <button
+            <Button
               key={key}
               type="button"
+              variant="outline"
               onClick={key === '⌫' ? backspace : () => press(key)}
-              className="flex h-14 items-center justify-center rounded-xl border bg-background text-2xl font-semibold active:bg-muted select-none"
+              className="h-14 rounded-xl text-2xl font-semibold active:bg-muted select-none"
             >
               {key}
-            </button>
+            </Button>
           ))}
         </div>
       ))}
@@ -57,14 +58,15 @@ export function BibKeyboard({ value, onChange, onConfirm, onBack }: BibKeyboardP
       {/* Letter pad A–Z */}
       <div className="flex flex-wrap justify-center gap-2">
         {LETTERS.map((l) => (
-          <button
+          <Button
             key={l}
             type="button"
+            variant="outline"
             onClick={() => press(l)}
-            className="flex h-12 w-12 items-center justify-center rounded-xl border bg-background text-lg font-semibold active:bg-muted select-none"
+            className="h-12 w-12 rounded-xl p-0 text-lg font-semibold active:bg-muted select-none"
           >
             {l}
-          </button>
+          </Button>
         ))}
       </div>
 
