@@ -172,7 +172,7 @@ export function EventsTable({ events, canCreate }: Props) {
                 <TableHead>สถานะ</TableHead>
                 <TableHead>วันที่เริ่ม</TableHead>
                 <TableHead>วันที่สิ้นสุด</TableHead>
-                <TableHead className="text-right">นักกีฬา</TableHead>
+                <TableHead className="w-20 text-right">นักกีฬา</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -209,7 +209,7 @@ export function EventsTable({ events, canCreate }: Props) {
                         href={`/dashboard/events/${event.eventId}/athletes`}
                         className="text-sm font-medium tabular-nums text-primary hover:underline"
                       >
-                        {event.registrationCount.toLocaleString('th-TH')}
+                        {event.registrationCount.toLocaleString()}
                       </Link>
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>
