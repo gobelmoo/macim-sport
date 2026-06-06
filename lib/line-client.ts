@@ -44,12 +44,14 @@ export async function pushMessage(to: string, messages: any[]): Promise<void> {
 }
 
 export async function verifyLiffIdToken(idToken: string): Promise<string> {
+  // LIFF channel ID is the numeric prefix of the LIFF ID (format: {channelId}-{suffix})
+  const liffChannelId = (process.env.NEXT_PUBLIC_LIFF_ID ?? '').split('-')[0]
   const res = await fetch('https://api.line.me/oauth2/v2.1/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       id_token: idToken,
-      client_id: '2010313786',
+      client_id: liffChannelId,
     }),
   })
   if (!res.ok) throw new Error('LIFF token verification failed')

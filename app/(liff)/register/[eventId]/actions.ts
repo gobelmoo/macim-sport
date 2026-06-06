@@ -21,13 +21,17 @@ export async function registerViaLine(
 ): Promise<RegisterState> {
   const liffIdToken = formData.get('liffIdToken') as string
   const eventId = formData.get('eventId') as string
-  const bib = formData.get('bib') as string
+  const bib = (formData.get('bib') as string).trim()
   const firstName = (formData.get('firstName') as string).trim()
   const lastName = (formData.get('lastName') as string).trim()
   const dateOfBirth = formData.get('dateOfBirth') as string
   const gender = formData.get('gender') as 'male' | 'female' | 'other'
 
-  if (!firstName || !lastName || !dateOfBirth || !gender) {
+  if (!liffIdToken) {
+    return { ok: false, error: 'ไม่พบ ID Token กรุณาเปิดผ่าน LINE ใหม่อีกครั้ง' }
+  }
+
+  if (!bib || !firstName || !lastName || !dateOfBirth || !gender) {
     return { ok: false, error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }
   }
 
@@ -62,10 +66,16 @@ export async function registerViaLine(
       })
       await insertAthleteConsent(athleteId)
     }
-
-    await pushMessage(lineUserId, [successMessage(firstName, bib, event.eventName)])
-    return { ok: true, firstName, bib, eventName: event.eventName }
   } catch {
     return { ok: false, error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }
   }
+
+  // Push success message after DB writes succeed; don't fail registration if push fails
+  try {
+    await pushMessage(lineUserId, [successMessage(firstName, bib, event.eventName)])
+  } catch {
+    console.error('[registerViaLine] pushMessage failed for', lineUserId)
+  }
+
+  return { ok: true, firstName, bib, eventName: event.eventName }
 }
