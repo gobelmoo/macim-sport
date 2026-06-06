@@ -1,7 +1,8 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { events } from '@/db/schema/events'
 import { sponsors } from '@/db/schema/sponsors'
+import { athleteEventRegistrations } from '@/db/schema/athlete_event_registrations'
 import type { eventStatusEnum, eventTypeEnum } from '@/db/schema/events'
 
 export type EventRow = {
@@ -39,6 +40,8 @@ export type CreateEventData = {
 }
 
 export type UpdateEventData = Partial<CreateEventData>
+
+export type EventRowWithCount = EventRow & { registrationCount: number }
 
 export type EventDetailRow = {
   eventId: string
@@ -82,6 +85,43 @@ export async function listEvents(sponsorId?: string): Promise<EventRow[]> {
     .innerJoin(sponsors, eq(events.sponsorId, sponsors.sponsorId))
     .where(sponsorId ? eq(events.sponsorId, sponsorId) : undefined)
     .orderBy(desc(events.startDate))
+}
+
+export async function listEventsWithCounts(sponsorId?: string): Promise<EventRowWithCount[]> {
+  const rows = await db
+    .select({
+      ...EVENT_SELECT_FIELDS,
+      registrationCount: count(athleteEventRegistrations.registrationId),
+    })
+    .from(events)
+    .innerJoin(sponsors, eq(events.sponsorId, sponsors.sponsorId))
+    .leftJoin(
+      athleteEventRegistrations,
+      eq(athleteEventRegistrations.eventId, events.eventId),
+    )
+    .where(sponsorId ? eq(events.sponsorId, sponsorId) : undefined)
+    .groupBy(
+      events.eventId,
+      events.sponsorId,
+      events.eventName,
+      events.eventLocation,
+      events.eventCity,
+      events.eventType,
+      events.organizerName,
+      events.startDate,
+      events.endDate,
+      events.isPublic,
+      events.hasParticipantImport,
+      events.status,
+      events.createdAt,
+      sponsors.sponsorName,
+      events.eventLogoUrl,
+      events.description,
+      events.longDescription,
+    )
+    .orderBy(desc(events.startDate))
+
+  return rows.map((r) => ({ ...r, registrationCount: Number(r.registrationCount) }))
 }
 
 export async function getEvent(eventId: string): Promise<EventRow | undefined> {
