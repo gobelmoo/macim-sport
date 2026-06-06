@@ -20,12 +20,12 @@ const STATUS_CONFIG: Record<
   EventStatus,
   { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; icon: LucideIcon; className?: string }
 > = {
-  draft:     { label: 'แบบร่าง',       variant: 'outline',     icon: FileEdit },
-  published: { label: 'เผยแพร่',        variant: 'secondary',   icon: Eye },
-  active:    { label: 'กำลังจัดงาน',   variant: 'secondary',   icon: Radio,
+  draft:     { label: 'ร่าง',               variant: 'outline',     icon: FileEdit },
+  published: { label: 'เผยแพร่',             variant: 'secondary',   icon: Eye },
+  active:    { label: 'เปิดลงทะเบียน',      variant: 'secondary',   icon: Radio,
                className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-  closed:    { label: 'ปิดแล้ว',        variant: 'destructive', icon: XCircle },
-  archived:  { label: 'เก็บถาวร',       variant: 'outline',     icon: Archive },
+  closed:    { label: 'ปิด',                variant: 'destructive', icon: XCircle },
+  archived:  { label: 'เก็บถาวร',           variant: 'outline',     icon: Archive },
 }
 
 const TYPE_CONFIG: Record<EventType, { label: string; icon: LucideIcon }> = {
