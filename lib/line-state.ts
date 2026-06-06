@@ -36,9 +36,20 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
   const existingAthlete = await getAthleteByLineUserId(lineUserId)
   const allActive = await getActiveEvents()
 
+  console.log('[startFlow]', {
+    lineUserId,
+    allActiveCount: allActive.length,
+    hasAthlete: !!existingAthlete,
+  })
+
   if (existingAthlete) {
     const registeredIds = await getRegisteredEventIds(existingAthlete.athleteId)
     const available = allActive.filter((e) => !registeredIds.includes(e.eventId))
+
+    console.log('[startFlow] returning athlete', {
+      registeredCount: registeredIds.length,
+      availableCount: available.length,
+    })
 
     if (available.length === 0) {
       await replyMessage(replyToken, [errorMessage('no_events')])
@@ -78,7 +89,7 @@ export async function handleText(
 ): Promise<void> {
   const session = await getLineSession(lineUserId)
 
-  if (!session || session.state === 'idle' || session.state === 'done') {
+  if (!session || session.state === 'idle' || session.state === 'done' || session.state === 'awaiting_event') {
     await startFlow(lineUserId, replyToken)
     return
   }
