@@ -1,40 +1,38 @@
 'use client'
 
-import { ConfirmActionButton } from '@/app/_components/confirm-action-button'
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { updateEventStatusAction } from './actions'
 import type { eventStatusEnum } from '@/db/schema/events'
 
 type EventStatus = (typeof eventStatusEnum.enumValues)[number]
 
-const STATUS_CONFIG: Partial<Record<EventStatus, {
-  next: EventStatus
-  label: string
-  title: string
-  description: string
-  action: string
-}>> = {
-  draft: {
-    next: 'published',
-    label: 'เผยแพร่ (Publish)',
-    title: 'ยืนยันการเผยแพร่',
-    description: 'งานจะถูกเผยแพร่และผู้ใช้จะสามารถมองเห็นได้ คุณแน่ใจหรือไม่?',
-    action: 'ยืนยันเผยแพร่',
-  },
-  published: {
-    next: 'active',
-    label: 'เปิดงาน (Activate)',
-    title: 'ยืนยันการเปิดงาน',
-    description: 'งานจะเปลี่ยนเป็นสถานะ Active และระบบ check-in จะพร้อมใช้งาน คุณแน่ใจหรือไม่?',
-    action: 'ยืนยันเปิดงาน',
-  },
-  active: {
-    next: 'closed',
-    label: 'ปิดงาน (Close)',
-    title: 'ยืนยันการปิดงาน',
-    description: 'เมื่อปิดงานแล้วจะไม่สามารถ check-in เพิ่มเติมได้อีก คุณแน่ใจหรือไม่ว่าต้องการปิดงานนี้?',
-    action: 'ยืนยันปิดงาน',
-  },
+const STATUS_LABEL: Record<EventStatus, string> = {
+  draft: 'แบบร่าง',
+  published: 'เผยแพร่',
+  active: 'กำลังจัดงาน',
+  closed: 'ปิดแล้ว',
+  archived: 'เก็บถาวร',
 }
+
+const ALL_STATUSES: EventStatus[] = ['draft', 'published', 'active', 'closed', 'archived']
 
 type StatusButtonsProps = {
   eventId: string
@@ -42,17 +40,53 @@ type StatusButtonsProps = {
 }
 
 export function StatusButtons({ eventId, currentStatus }: StatusButtonsProps) {
-  const cfg = STATUS_CONFIG[currentStatus]
-  if (!cfg) return null
+  const [targetStatus, setTargetStatus] = useState<EventStatus | null>(null)
+  const [pending, setPending] = useState(false)
+
+  const otherStatuses = ALL_STATUSES.filter((s) => s !== currentStatus)
+
+  async function handleConfirm() {
+    if (!targetStatus) return
+    setPending(true)
+    await updateEventStatusAction(eventId, targetStatus)
+    setPending(false)
+    setTargetStatus(null)
+  }
 
   return (
-    <ConfirmActionButton
-      triggerLabel={cfg.label}
-      pendingLabel="กำลังอัปเดต..."
-      title={cfg.title}
-      description={cfg.description}
-      actionLabel={cfg.action}
-      onConfirm={() => updateEventStatusAction(eventId, cfg.next)}
-    />
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            เปลี่ยนสถานะ
+            <ChevronDown className="ml-1 size-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {otherStatuses.map((s) => (
+            <DropdownMenuItem key={s} onSelect={() => setTargetStatus(s)}>
+              {STATUS_LABEL[s]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={!!targetStatus} onOpenChange={(open) => { if (!open) setTargetStatus(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>เปลี่ยนสถานะเป็น &ldquo;{targetStatus ? STATUS_LABEL[targetStatus] : ''}&rdquo;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              สถานะปัจจุบัน: {STATUS_LABEL[currentStatus]} → {targetStatus ? STATUS_LABEL[targetStatus] : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm} disabled={pending}>
+              {pending ? 'กำลังอัปเดต...' : 'ยืนยัน'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
