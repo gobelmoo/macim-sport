@@ -5,6 +5,7 @@ import { athleteEventRegistrations } from '@/db/schema/athlete_event_registratio
 import { athletes } from '@/db/schema/athletes'
 import { checkins } from '@/db/schema/checkins'
 import { events } from '@/db/schema/events'
+import { stations } from '@/db/schema/stations'
 import type { genderEnum } from '@/db/schema/athletes'
 
 export interface AthleteRow {
@@ -197,6 +198,26 @@ export interface AthleteEventRow {
   stampCount: number
 }
 
+export interface AthleteStampRow {
+  stampId: string
+  stationId: string | null
+  stationName: string | null
+  stationType: string | null
+  stampSource: 'check_in' | 'add_friend'
+  stampedAt: Date
+}
+
+export interface AthleteEventDetailRow {
+  registrationId: string
+  athleteId: string | null
+  bibNumber: string
+  firstName: string | null
+  lastName: string | null
+  status: 'active' | 'hidden' | 'inactive'
+  registeredAt: Date
+  stamps: AthleteStampRow[]
+}
+
 export async function listAthletesByEvent(
   eventId: string,
 ): Promise<AthleteEventRow[]> {
@@ -236,4 +257,59 @@ export async function listAthletesByEvent(
     .orderBy(athleteEventRegistrations.bibNumber)
 
   return rows.map((r) => ({ ...r, stampCount: Number(r.stampCount) }))
+}
+
+export async function listAthletesWithStampsByEvent(
+  eventId: string,
+): Promise<AthleteEventDetailRow[]> {
+  const [registrations, stampRows] = await Promise.all([
+    db
+      .select({
+        registrationId: athleteEventRegistrations.registrationId,
+        athleteId: athleteEventRegistrations.athleteId,
+        bibNumber: athleteEventRegistrations.bibNumber,
+        status: athleteEventRegistrations.status,
+        registeredAt: athleteEventRegistrations.registeredAt,
+        firstName: athletes.firstName,
+        lastName: athletes.lastName,
+      })
+      .from(athleteEventRegistrations)
+      .leftJoin(athletes, eq(athleteEventRegistrations.athleteId, athletes.athleteId))
+      .where(eq(athleteEventRegistrations.eventId, eventId))
+      .orderBy(athleteEventRegistrations.bibNumber),
+
+    db
+      .select({
+        stampId: stamps.stampId,
+        athleteId: stamps.athleteId,
+        stationId: stamps.stationId,
+        stationName: stations.stationName,
+        stationType: stations.stationType,
+        stampSource: stamps.stampSource,
+        stampedAt: stamps.stampedAt,
+      })
+      .from(stamps)
+      .leftJoin(stations, eq(stamps.stationId, stations.stationId))
+      .where(eq(stamps.eventId, eventId))
+      .orderBy(stamps.stampedAt),
+  ])
+
+  const stampsByAthleteId = new Map<string, AthleteStampRow[]>()
+  for (const s of stampRows) {
+    const list = stampsByAthleteId.get(s.athleteId) ?? []
+    list.push({
+      stampId: s.stampId,
+      stationId: s.stationId,
+      stationName: s.stationName,
+      stationType: s.stationType,
+      stampSource: s.stampSource,
+      stampedAt: s.stampedAt,
+    })
+    stampsByAthleteId.set(s.athleteId, list)
+  }
+
+  return registrations.map((r) => ({
+    ...r,
+    stamps: r.athleteId ? (stampsByAthleteId.get(r.athleteId) ?? []) : [],
+  }))
 }
