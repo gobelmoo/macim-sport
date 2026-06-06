@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { th } from 'date-fns/locale'
 import { ChevronLeft, Users } from 'lucide-react'
 import { auth } from '@/auth'
-import { canAccess, PERMISSIONS, ROLES } from '@/lib/rbac'
+import { canAccess, isMacimAdmin, PERMISSIONS } from '@/lib/rbac'
 import { getEvent } from '@/db/queries/events'
 import { listAthletesWithStampsByEvent } from '@/db/queries/athletes'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+
+const STATUS_LABEL: Record<string, string> = {
+  active: 'ใช้งาน',
+  hidden: 'ซ่อน',
+  inactive: 'ไม่ใช้งาน',
+}
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
+  active: 'default',
+  hidden: 'secondary',
+  inactive: 'outline',
+}
 
 type Props = {
   params: Promise<{ id: string }>
@@ -35,25 +46,15 @@ export default async function AthletesPage({ params }: Props) {
   const canViewOwn = canAccess(PERMISSIONS.EVENT_VIEW_OWN, authz)
   if (!canViewAll && !canViewOwn) redirect('/dashboard')
 
-  const event = await getEvent(id)
+  const [event, athleteList] = await Promise.all([
+    getEvent(id),
+    listAthletesWithStampsByEvent(id),
+  ])
   if (!event) notFound()
 
   if (canViewOwn && !canViewAll && event.sponsorId !== userSponsorId) notFound()
 
-  const canEdit = role === ROLES.SUPER_ADMIN_OWNER || role === ROLES.SUPER_ADMIN_MANAGER
-
-  const athleteList = await listAthletesWithStampsByEvent(id)
-
-  const STATUS_LABEL: Record<string, string> = {
-    active: 'ใช้งาน',
-    hidden: 'ซ่อน',
-    inactive: 'ไม่ใช้งาน',
-  }
-  const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
-    active: 'default',
-    hidden: 'secondary',
-    inactive: 'outline',
-  }
+  const canEdit = isMacimAdmin(role)
 
   return (
     <main className="p-6 lg:p-8">

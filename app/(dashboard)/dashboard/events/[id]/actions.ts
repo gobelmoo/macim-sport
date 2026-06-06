@@ -59,6 +59,10 @@ async function assertOwnerOrManager() {
   }
 }
 
+function revalidateEventData(eventId: string) {
+  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+}
+
 export async function updateEventAction(
   eventId: string,
   _prevState: ActionState,
@@ -86,7 +90,7 @@ export async function updateEventAction(
   }
 
   await updateEvent(eventId, parsed.data)
-  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  revalidateEventData(eventId)
   return {}
 }
 
@@ -96,7 +100,7 @@ export async function updateEventStatusAction(
 ): Promise<void> {
   await assertOwnerOrManager()
   await updateEventStatus(eventId, newStatus)
-  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  revalidateEventData(eventId)
 }
 
 export async function createStationAction(
@@ -118,7 +122,7 @@ export async function createStationAction(
   }
 
   await createStation({ eventId, ...parsed.data })
-  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  revalidateEventData(eventId)
   return { success: true }
 }
 
@@ -142,7 +146,7 @@ export async function updateStationAction(
   }
 
   await updateStation(stationId, parsed.data)
-  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  revalidateEventData(eventId)
   return { success: true }
 }
 
@@ -152,7 +156,7 @@ export async function toggleStationStatusAction(
 ): Promise<void> {
   await assertOwnerOrManager()
   await toggleStationStatus(stationId)
-  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  revalidateEventData(eventId)
 }
 
 export async function deleteStationAction(
@@ -162,7 +166,7 @@ export async function deleteStationAction(
   const [, event] = await Promise.all([assertOwnerOrManager(), getEvent(eventId)])
   if (!event || event.status === 'active') throw new Error('ลบ station ไม่ได้เมื่อ event กำลังจัดงาน')
   await deleteStation(stationId)
-  revalidatePath(`/dashboard/events/${eventId}`, 'layout')
+  revalidateEventData(eventId)
 }
 
 export async function deleteEventAction(eventId: string): Promise<void> {

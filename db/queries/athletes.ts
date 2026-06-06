@@ -296,7 +296,8 @@ export async function listAthletesWithStampsByEvent(
 
   const stampsByAthleteId = new Map<string, AthleteStampRow[]>()
   for (const s of stampRows) {
-    const list = stampsByAthleteId.get(s.athleteId) ?? []
+    let list = stampsByAthleteId.get(s.athleteId)
+    if (!list) { list = []; stampsByAthleteId.set(s.athleteId, list) }
     list.push({
       stampId: s.stampId,
       stationId: s.stationId,
@@ -305,7 +306,6 @@ export async function listAthletesWithStampsByEvent(
       stampSource: s.stampSource,
       stampedAt: s.stampedAt,
     })
-    stampsByAthleteId.set(s.athleteId, list)
   }
 
   return registrations.map((r) => ({
