@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import liff from '@line/liff'
-import { fetchAthleteProfile, registerViaLine } from './actions'
+import { fetchAthleteProfile, fetchEventInfo, registerViaLine } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,19 +13,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Calendar } from 'lucide-react'
+
+const THAI_MONTHS = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
+  'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
+  'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+]
+
+const BE_YEARS = Array.from({ length: 78 }, (_, i) => 2557 - i) // 2557–2480 BE
 
 export default function RegisterPage() {
   const [idToken, setIdToken] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [liffError, setLiffError] = useState<string | null>(null)
   const [eventId, setEventId] = useState('')
+  const [eventInfo, setEventInfo] = useState<{
+    eventName: string
+    eventLogoUrl: string | null
+    description: string | null
+  } | null>(null)
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
   const [gender, setGender] = useState('')
   const [bib, setBib] = useState('')
+
+  // DOB — separate day/month/year (BE)
+  const [dobDay, setDobDay] = useState('')
+  const [dobMonth, setDobMonth] = useState('')
+  const [dobYear, setDobYear] = useState('') // BE year string
+
+  const dobCe =
+    dobDay && dobMonth && dobYear
+      ? `${String(parseInt(dobYear) - 543).padStart(4, '0')}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`
+      : ''
 
   const [state, action, pending] = useActionState(registerViaLine, null)
 
@@ -37,26 +59,30 @@ export default function RegisterPage() {
           liff.login()
           return
         }
-        // After liff.init(), LIFF restores the original URL via replaceState.
-        // Read from window.location to get params even when the first load had
-        // liff.state in the URL (new-user login redirect path).
         const params = new URLSearchParams(window.location.search)
         const resolvedEventId = params.get('eventId') ?? ''
         const resolvedBib = params.get('bib') ?? ''
         const token = liff.getIDToken()
 
-        const profile = (resolvedEventId && token)
-          ? await fetchAthleteProfile(token, resolvedEventId)
-          : null
+        const [profile, info] = await Promise.all([
+          resolvedEventId && token ? fetchAthleteProfile(token, resolvedEventId) : null,
+          resolvedEventId ? fetchEventInfo(resolvedEventId) : null,
+        ])
 
         if (profile) {
           setFirstName(profile.firstName)
           setLastName(profile.lastName)
-          setDateOfBirth(profile.dateOfBirth)
           setGender(profile.gender)
+          // Parse CE date → BE parts
+          if (profile.dateOfBirth) {
+            const [ceYear, ceMonth, ceDay] = profile.dateOfBirth.split('-')
+            setDobDay(String(parseInt(ceDay)))
+            setDobMonth(String(parseInt(ceMonth)))
+            setDobYear(String(parseInt(ceYear) + 543))
+          }
         }
         setBib(profile?.existingBib ?? resolvedBib)
-
+        setEventInfo(info)
         setEventId(resolvedEventId)
         setIdToken(token)
         setReady(true)
@@ -106,97 +132,154 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>ลงทะเบียน</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={action} className="space-y-4">
-            <input type="hidden" name="liffIdToken" value={idToken ?? ''} />
-            <input type="hidden" name="eventId" value={eventId} />
+    <div className="min-h-screen bg-background">
+      {/* Event Hero */}
+      {eventInfo?.eventLogoUrl ? (
+        <img
+          src={eventInfo.eventLogoUrl}
+          alt={eventInfo.eventName}
+          className="h-48 w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-32 w-full items-center justify-center bg-muted">
+          <Calendar className="size-12 text-muted-foreground" />
+        </div>
+      )}
 
-            <div className="space-y-1">
-              <Label htmlFor="firstName">ชื่อจริง</Label>
-              <Input
-                id="firstName"
-                name="firstName"
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="ชื่อจริง"
-              />
-            </div>
+      <div className="space-y-6 p-5">
+        {/* Event Header */}
+        <div>
+          <h1 className="text-2xl font-bold">{eventInfo?.eventName ?? 'ลงทะเบียน'}</h1>
+          {eventInfo?.description && (
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {eventInfo.description}
+            </p>
+          )}
+        </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="lastName">นามสกุล</Label>
-              <Input
-                id="lastName"
-                name="lastName"
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="นามสกุล"
-              />
-            </div>
+        {/* Form */}
+        <form action={action} className="space-y-4">
+          <input type="hidden" name="liffIdToken" value={idToken ?? ''} />
+          <input type="hidden" name="eventId" value={eventId} />
+          <input type="hidden" name="dateOfBirth" value={dobCe} />
 
-            <div className="space-y-1">
-              <Label htmlFor="dateOfBirth">วันเกิด</Label>
-              <Input
-                id="dateOfBirth"
-                name="dateOfBirth"
-                type="date"
-                required
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-              />
-            </div>
+          <div className="space-y-1">
+            <Label htmlFor="firstName">ชื่อจริง</Label>
+            <Input
+              id="firstName"
+              name="firstName"
+              required
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="ชื่อจริง"
+            />
+          </div>
 
-            <div className="space-y-1">
-              <Label>เพศ</Label>
-              <Select name="gender" value={gender} onValueChange={setGender} required>
+          <div className="space-y-1">
+            <Label htmlFor="lastName">นามสกุล</Label>
+            <Input
+              id="lastName"
+              name="lastName"
+              required
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="นามสกุล"
+            />
+          </div>
+
+          {/* DOB — แยก 3 selects */}
+          <div className="space-y-1">
+            <Label>วันเกิด (พ.ศ.)</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <Select value={dobDay} onValueChange={setDobDay} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="เลือกเพศ" />
+                  <SelectValue placeholder="วัน" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">ชาย</SelectItem>
-                  <SelectItem value="female">หญิง</SelectItem>
-                  <SelectItem value="other">อื่นๆ</SelectItem>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <SelectItem key={d} value={String(d)}>
+                      {d}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <input type="hidden" name="gender" value={gender} />
+
+              <Select value={dobMonth} onValueChange={setDobMonth} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="เดือน" />
+                </SelectTrigger>
+                <SelectContent>
+                  {THAI_MONTHS.map((name, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={dobYear} onValueChange={setDobYear} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="ปี พ.ศ." />
+                </SelectTrigger>
+                <SelectContent>
+                  {BE_YEARS.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
 
-            <div className="rounded-md border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
-              <div className="space-y-1">
-                <Label htmlFor="bib" className="text-base font-semibold">
-                  หมายเลข BIB
-                </Label>
-                <Input
-                  id="bib"
-                  name="bib"
-                  required
-                  value={bib}
-                  onChange={(e) => setBib(e.target.value.toUpperCase())}
-                  placeholder="เช่น A001"
-                  className="text-lg tracking-widest font-mono"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                ⚠️ เลข BIB จะใช้ในการรับสิทธิ์ฟรี ที่บูธ MACIM-SPORT — กรุณากรอกให้ถูกต้อง
-              </p>
+          <div className="space-y-1">
+            <Label>เพศ</Label>
+            <Select name="gender" value={gender} onValueChange={setGender} required>
+              <SelectTrigger>
+                <SelectValue placeholder="เลือกเพศ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="male">ชาย</SelectItem>
+                <SelectItem value="female">หญิง</SelectItem>
+                <SelectItem value="other">อื่นๆ</SelectItem>
+              </SelectContent>
+            </Select>
+            <input type="hidden" name="gender" value={gender} />
+          </div>
+
+          <div className="rounded-md border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="bib" className="text-base font-semibold">
+                หมายเลข BIB
+              </Label>
+              <Input
+                id="bib"
+                name="bib"
+                required
+                value={bib}
+                onChange={(e) => setBib(e.target.value.toUpperCase())}
+                placeholder="เช่น A001"
+                className="text-lg tracking-widest font-mono"
+              />
             </div>
+            <p className="text-xs text-muted-foreground">
+              ⚠️ เลข BIB จะใช้ในการรับสิทธิ์ฟรี ที่บูธ MACIM-SPORT — กรุณากรอกให้ถูกต้อง
+            </p>
+          </div>
 
-            {state && !state.ok && (
-              <p className="text-sm text-red-600">{state.error}</p>
-            )}
+          {state && !state.ok && (
+            <p className="text-sm text-red-600">{state.error}</p>
+          )}
 
-            <Button type="submit" className="w-full" disabled={pending || !gender}>
-              {pending ? 'กำลังบันทึก...' : 'ยืนยันการลงทะเบียน'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={pending || !gender || !dobCe}
+          >
+            {pending ? 'กำลังบันทึก...' : 'ยืนยันการลงทะเบียน'}
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }
