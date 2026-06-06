@@ -5,13 +5,24 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { ROLES } from '@/lib/rbac'
-import { deleteDraftEvent, getEvent, updateEvent, updateEventStatus } from '@/db/queries/events'
+import {
+  deleteDraftEvent,
+  getEvent,
+  updateEvent,
+  updateEventStatus,
+} from '@/db/queries/events'
 import {
   createStation,
   deleteStation,
   toggleStationStatus,
   updateStation,
 } from '@/db/queries/stations'
+import {
+  addGalleryImage,
+  deleteGalleryImage,
+  updateGalleryCaption,
+  reorderGalleryImages,
+} from '@/db/queries/event_gallery_images'
 import type { eventStatusEnum } from '@/db/schema/events'
 
 export type ActionState = {
@@ -29,6 +40,9 @@ const updateEventSchema = z.object({
   organizerName: z.string().min(1, 'กรุณาระบุชื่อผู้จัด').optional(),
   startDate: z.string().min(1, 'กรุณาระบุวันที่เริ่ม').optional(),
   endDate: z.string().min(1, 'กรุณาระบุวันที่สิ้นสุด').optional(),
+  eventLogoUrl: z.string().url().optional().or(z.literal('')),
+  description: z.string().max(300).optional(),
+  longDescription: z.string().optional(),
 })
 
 const stationSchema = z.object({
@@ -61,6 +75,9 @@ export async function updateEventAction(
     organizerName: formData.get('organizerName') ?? undefined,
     startDate: formData.get('startDate') ?? undefined,
     endDate: formData.get('endDate') ?? undefined,
+    eventLogoUrl: formData.get('eventLogoUrl') || undefined,
+    description: formData.get('description') || undefined,
+    longDescription: formData.get('longDescription') || undefined,
   }
 
   const parsed = updateEventSchema.safeParse(raw)
@@ -155,4 +172,51 @@ export async function deleteEventAction(eventId: string): Promise<void> {
   if (!deleted) throw new Error('ลบไม่ได้ — event ไม่ใช่ draft หรือไม่พบ')
   revalidatePath('/dashboard/events')
   redirect('/dashboard/events')
+}
+
+export async function addGalleryImageAction(
+  eventId: string,
+  imageUrl: string,
+  caption: string | null | undefined,
+): Promise<{ imageId: string } | { error: string }> {
+  await assertOwnerOrManager()
+  try {
+    const { imageId } = await addGalleryImage({
+      eventId,
+      imageUrl,
+      caption: caption ?? undefined,
+    })
+    revalidatePath(`/dashboard/events/${eventId}/edit`)
+    return { imageId }
+  } catch {
+    return { error: 'เพิ่มรูปไม่สำเร็จ' }
+  }
+}
+
+export async function deleteGalleryImageAction(
+  imageId: string,
+  eventId: string,
+): Promise<void> {
+  await assertOwnerOrManager()
+  await deleteGalleryImage(imageId)
+  revalidatePath(`/dashboard/events/${eventId}/edit`)
+}
+
+export async function updateGalleryCaptionAction(
+  imageId: string,
+  eventId: string,
+  caption: string | null,
+): Promise<void> {
+  await assertOwnerOrManager()
+  await updateGalleryCaption(imageId, caption)
+  revalidatePath(`/dashboard/events/${eventId}/edit`)
+}
+
+export async function reorderGalleryAction(
+  eventId: string,
+  orderedImageIds: string[],
+): Promise<void> {
+  await assertOwnerOrManager()
+  await reorderGalleryImages(orderedImageIds)
+  revalidatePath(`/dashboard/events/${eventId}/edit`)
 }

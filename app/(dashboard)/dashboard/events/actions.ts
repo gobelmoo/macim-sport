@@ -25,11 +25,12 @@ const createEventSchema = z.object({
   organizerName: z.string().min(1, 'กรุณาระบุชื่อผู้จัด'),
   startDate: z.string().min(1, 'กรุณาระบุวันที่เริ่ม'),
   endDate: z.string().min(1, 'กรุณาระบุวันที่สิ้นสุด'),
+  eventLogoUrl: z.string().url().optional().or(z.literal('')),
+  description: z.string().max(300).optional(),
+  longDescription: z.string().optional(),
 })
 
-const updateEventSchema = createEventSchema.partial().extend({
-  sponsorId: z.string().optional(),
-})
+const updateEventSchema = createEventSchema.partial()
 
 async function assertOwnerOrManager() {
   const session = await auth()
@@ -55,6 +56,9 @@ export async function createEventAction(
     organizerName: formData.get('organizerName'),
     startDate: formData.get('startDate'),
     endDate: formData.get('endDate'),
+    eventLogoUrl: formData.get('eventLogoUrl') || undefined,
+    description: formData.get('description') || undefined,
+    longDescription: formData.get('longDescription') || undefined,
   }
 
   const parsed = createEventSchema.safeParse(raw)
@@ -82,6 +86,9 @@ export async function updateEventAction(
     organizerName: formData.get('organizerName') ?? undefined,
     startDate: formData.get('startDate') ?? undefined,
     endDate: formData.get('endDate') ?? undefined,
+    eventLogoUrl: formData.get('eventLogoUrl') || undefined,
+    description: formData.get('description') || undefined,
+    longDescription: formData.get('longDescription') || undefined,
   }
 
   const parsed = updateEventSchema.safeParse(raw)
