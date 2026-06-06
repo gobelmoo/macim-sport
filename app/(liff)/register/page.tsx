@@ -20,11 +20,14 @@ interface Props {
 }
 
 export default function RegisterPage({ searchParams }: Props) {
-  const { eventId = '', bib: bibFromUrl = '' } = use(searchParams)
+  const { eventId: eventIdFromServer = '', bib: bibFromUrl = '' } = use(searchParams)
 
   const [idToken, setIdToken] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [liffError, setLiffError] = useState<string | null>(null)
+
+  // eventId starts from server props; updated after liff.init() restores liff.state params
+  const [eventId, setEventId] = useState(eventIdFromServer)
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -42,6 +45,13 @@ export default function RegisterPage({ searchParams }: Props) {
           liff.login()
           return
         }
+        // After liff.init(), LIFF restores the original URL via replaceState.
+        // Read from window.location so we pick up the eventId even when the
+        // first page load had liff.state in the URL (new-user login redirect).
+        const params = new URLSearchParams(window.location.search)
+        const resolvedEventId = params.get('eventId') || eventIdFromServer
+        setEventId(resolvedEventId)
+
         const token = liff.getIDToken()
         setIdToken(token)
         setReady(true)
