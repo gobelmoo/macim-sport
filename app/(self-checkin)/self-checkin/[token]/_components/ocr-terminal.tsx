@@ -33,6 +33,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const consecutiveRef = useRef(0)
   const [uiState, setUiState] = useState<UIState>({ status: 'scanning' })
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [debug, setDebug] = useState<{ text: string; confidence: number; dim: string } | null>(null)
 
   const stopCamera = useCallback(() => {
     if (intervalRef.current) {
@@ -102,6 +103,12 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
           const { data } = await worker.recognize(canvas)
           const raw = data.text.replace(/\D/g, '').trim()
+
+          setDebug({
+            text: raw || '(ไม่พบ)',
+            confidence: Math.round(data.confidence),
+            dim: `${w}×${h}`,
+          })
 
           if (raw.length >= 2 && raw.length <= 5 && data.confidence > 70) {
             if (raw === lastBibRef.current) {
@@ -202,7 +209,20 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 <div className="flex-[0.35] bg-black/40" />
               </div>
             </div>
-            <canvas ref={canvasRef} className="hidden" />
+            {/* diagnostic panel */}
+            <div className="rounded-xl border bg-muted/60 p-3 text-xs space-y-1">
+              <p className="font-semibold text-muted-foreground">ภาพที่ OCR เห็น (crop zone)</p>
+              <canvas ref={canvasRef} className="w-full rounded border" />
+              {debug ? (
+                <>
+                  <p>กล้อง: <span className="font-mono">{debug.dim}</span></p>
+                  <p>อ่านได้: <span className="font-mono font-bold">{debug.text}</span></p>
+                  <p>confidence: <span className="font-mono">{debug.confidence}%</span></p>
+                </>
+              ) : (
+                <p className="text-muted-foreground">รอผล OCR...</p>
+              )}
+            </div>
             <button
               type="button"
               className="text-sm text-muted-foreground underline underline-offset-2 text-center py-1"
