@@ -44,6 +44,17 @@ export default async function AthletesPage({ params }: Props) {
 
   const athleteList = await listAthletesWithStampsByEvent(id)
 
+  const STATUS_LABEL: Record<string, string> = {
+    active: 'ใช้งาน',
+    hidden: 'ซ่อน',
+    inactive: 'ไม่ใช้งาน',
+  }
+  const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline'> = {
+    active: 'default',
+    hidden: 'secondary',
+    inactive: 'outline',
+  }
+
   return (
     <main className="p-6 lg:p-8">
       <div className="mb-2 flex items-center gap-2">
@@ -112,8 +123,8 @@ export default async function AthletesPage({ params }: Props) {
                     {format(a.registeredAt, 'dd MMM yyyy HH:mm', { locale: th })}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={a.status === 'active' ? 'default' : 'outline'}>
-                      {a.status === 'active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}
+                    <Badge variant={STATUS_VARIANT[a.status] ?? 'outline'}>
+                      {STATUS_LABEL[a.status] ?? a.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
