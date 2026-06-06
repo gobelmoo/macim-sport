@@ -196,7 +196,7 @@ export default function RegisterPage() {
           <div className="space-y-1">
             <Label>วันเกิด (พ.ศ.)</Label>
             <div className="grid grid-cols-3 gap-2">
-              <Select value={dobDay} onValueChange={setDobDay} required>
+              <Select value={dobDay} onValueChange={setDobDay}>
                 <SelectTrigger>
                   <SelectValue placeholder="วัน" />
                 </SelectTrigger>
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={dobMonth} onValueChange={setDobMonth} required>
+              <Select value={dobMonth} onValueChange={setDobMonth}>
                 <SelectTrigger>
                   <SelectValue placeholder="เดือน" />
                 </SelectTrigger>
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={dobYear} onValueChange={setDobYear} required>
+              <Select value={dobYear} onValueChange={setDobYear}>
                 <SelectTrigger>
                   <SelectValue placeholder="ปี พ.ศ." />
                 </SelectTrigger>

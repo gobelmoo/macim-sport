@@ -84,6 +84,10 @@ export async function registerViaLine(
     return { ok: false, error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }
   }
 
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
+    return { ok: false, error: 'วันเกิดไม่ถูกต้อง' }
+  }
+
   if (!isValidBib(bib)) {
     return { ok: false, error: 'หมายเลข BIB ไม่ถูกต้อง' }
   }
