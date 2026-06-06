@@ -1,11 +1,12 @@
 'use client'
 
 import { useActionState } from 'react'
-import { Tag, User, MapPin, Building2 } from 'lucide-react'
+import { Tag, User, MapPin, Building2, ImageIcon, AlignLeft, FileText } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -13,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ImageUpload } from '@/components/image-upload'
+import { TiptapEditor } from '@/components/tiptap-editor'
 import type { ActionState } from './actions'
 
 type Sponsor = { sponsorId: string; sponsorName: string }
@@ -28,6 +31,9 @@ type EventEditFormProps = {
     organizerName: string
     startDate: string
     endDate: string
+    eventLogoUrl?: string | null
+    description?: string | null
+    longDescription?: string | null
   }
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>
 }
@@ -137,6 +143,45 @@ export function EventEditForm({ sponsors, defaultValues, action }: EventEditForm
             <p className="text-xs text-destructive">{state.fieldErrors.endDate[0]}</p>
           )}
         </div>
+      </div>
+
+      {/* Event Logo */}
+      <div className="space-y-1.5">
+        <Label className="flex items-center gap-2">
+          <ImageIcon className="size-4 text-muted-foreground" />
+          Logo งาน
+        </Label>
+        <ImageUpload
+          name="eventLogoUrl"
+          defaultValue={defaultValues.eventLogoUrl}
+          label="อัปโหลด Logo"
+        />
+      </div>
+
+      {/* Short Description */}
+      <div className="space-y-1.5">
+        <Label htmlFor="description" className="flex items-center gap-2">
+          <AlignLeft className="size-4 text-muted-foreground" />
+          คำอธิบายสั้น
+        </Label>
+        <Textarea
+          id="description"
+          name="description"
+          placeholder="คำอธิบายงานสั้นๆ (ไม่เกิน 300 ตัวอักษร)"
+          maxLength={300}
+          defaultValue={defaultValues.description ?? ''}
+          className="resize-none"
+          rows={3}
+        />
+      </div>
+
+      {/* Long Description */}
+      <div className="space-y-1.5">
+        <Label className="flex items-center gap-2">
+          <FileText className="size-4 text-muted-foreground" />
+          รายละเอียดงาน
+        </Label>
+        <TiptapEditor name="longDescription" defaultValue={defaultValues.longDescription} />
       </div>
 
       <div className="flex gap-3 pt-2">

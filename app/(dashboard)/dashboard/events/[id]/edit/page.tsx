@@ -1,14 +1,16 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Pencil } from 'lucide-react'
+import { ChevronLeft, Pencil, Images } from 'lucide-react'
 import { auth } from '@/auth'
 import { ROLES } from '@/lib/rbac'
 import { getEvent } from '@/db/queries/events'
 import { listSponsors } from '@/db/queries/sponsors'
+import { listGalleryImages } from '@/db/queries/event_gallery_images'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { updateEventAction } from '../actions'
 import { EventEditForm } from '../event-edit-form'
+import { GallerySection } from '../_components/gallery-section'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -23,7 +25,11 @@ export default async function EditEventPage({ params }: Props) {
     redirect(`/dashboard/events/${id}`)
   }
 
-  const [event, sponsorList] = await Promise.all([getEvent(id), listSponsors()])
+  const [event, sponsorList, galleryImages] = await Promise.all([
+    getEvent(id),
+    listSponsors(),
+    listGalleryImages(id),
+  ])
   if (!event) notFound()
 
   const boundUpdateAction = updateEventAction.bind(null, id)
@@ -42,7 +48,7 @@ export default async function EditEventPage({ params }: Props) {
         <h1 className="text-2xl font-semibold">แก้ไข Event</h1>
       </div>
 
-      <div className="max-w-2xl">
+      <div className="max-w-2xl space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -54,17 +60,32 @@ export default async function EditEventPage({ params }: Props) {
             <EventEditForm
               sponsors={sponsorList}
               defaultValues={{
-                sponsorId:     event.sponsorId,
-                eventName:     event.eventName,
-                eventLocation: event.eventLocation,
-                eventCity:     event.eventCity,
-                eventType:     event.eventType,
-                organizerName: event.organizerName,
-                startDate:     event.startDate,
-                endDate:       event.endDate,
+                sponsorId:       event.sponsorId,
+                eventName:       event.eventName,
+                eventLocation:   event.eventLocation,
+                eventCity:       event.eventCity,
+                eventType:       event.eventType,
+                organizerName:   event.organizerName,
+                startDate:       event.startDate,
+                endDate:         event.endDate,
+                eventLogoUrl:    event.eventLogoUrl,
+                description:     event.description,
+                longDescription: event.longDescription,
               }}
               action={boundUpdateAction}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Images className="size-4" />
+              Gallery ภาพ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GallerySection eventId={id} initialImages={galleryImages} />
           </CardContent>
         </Card>
       </div>
