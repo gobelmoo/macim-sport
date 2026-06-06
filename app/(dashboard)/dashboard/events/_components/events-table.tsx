@@ -34,11 +34,12 @@ import { EventStatusBadge, EventTypeBadge } from './event-badges'
 const PAGE_SIZE = 20
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'ทุกสถานะ' },
-  { value: 'draft', label: 'แบบร่าง' },
+  { value: 'all',       label: 'ทุกสถานะ' },
+  { value: 'draft',     label: 'ร่าง' },
   { value: 'published', label: 'เผยแพร่' },
-  { value: 'active', label: 'กำลังจัดงาน' },
-  { value: 'closed', label: 'ปิดแล้ว' },
+  { value: 'active',    label: 'เปิดลงทะเบียน' },
+  { value: 'closed',    label: 'ปิด' },
+  { value: 'archived',  label: 'เก็บถาวร' },
 ] as const
 
 const TYPE_OPTIONS = [
@@ -55,7 +56,7 @@ interface Props {
 
 export function EventsTable({ events, canCreate }: Props) {
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published' | 'active' | 'closed'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published' | 'active' | 'closed' | 'archived'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'run' | 'triathlon' | 'other'>('all')
   const [page, setPage] = useState(1)
 
