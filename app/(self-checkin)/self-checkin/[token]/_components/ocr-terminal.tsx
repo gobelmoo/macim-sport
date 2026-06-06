@@ -14,13 +14,14 @@ interface Props {
 }
 
 type UIState =
-  | { status: 'idle' }
   | { status: 'scanning' }
   | { status: 'confirming'; bib: string }
   | { status: 'manual'; value: string }
   | { status: 'submitting'; bib: string }
   | { status: 'result'; result: CheckinResult; bib: string }
   | { status: 'error'; message: string }
+
+const AUTO_RESET_SECONDS = 5
 
 export function OcrTerminal({ token, eventName, stationName }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -30,11 +31,14 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const isProcessingRef = useRef(false)
   const lastBibRef = useRef<string | null>(null)
   const consecutiveRef = useRef(0)
-  const [uiState, setUiState] = useState<UIState>({ status: 'idle' })
-  const [debugInfo, setDebugInfo] = useState<{ text: string; confidence: number; videoDim: string } | null>(null)
+  const [uiState, setUiState] = useState<UIState>({ status: 'scanning' })
+  const [countdown, setCountdown] = useState<number | null>(null)
 
   const stopCamera = useCallback(() => {
-    if (intervalRef.current) { clearTimeout(intervalRef.current as unknown as ReturnType<typeof setTimeout>); intervalRef.current = null }
+    if (intervalRef.current) {
+      clearTimeout(intervalRef.current as unknown as ReturnType<typeof setTimeout>)
+      intervalRef.current = null
+    }
     isProcessingRef.current = false
     if (videoRef.current?.srcObject) {
       ;(videoRef.current.srcObject as MediaStream).getTracks().forEach((t) => t.stop())
@@ -54,10 +58,9 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
   const startCamera = useCallback(async () => {
     setUiState({ status: 'scanning' })
-    setDebugInfo(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 } },
+        video: { facingMode: 'user', width: { ideal: 1280 } },
       })
 
       if (!videoRef.current) {
@@ -100,12 +103,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
           const { data } = await worker.recognize(canvas)
           const raw = data.text.replace(/\D/g, '').trim()
 
-          setDebugInfo({
-            text: raw || '(ไม่พบ)',
-            confidence: Math.round(data.confidence),
-            videoDim: `${w}×${h}`,
-          })
-
           if (raw.length >= 2 && raw.length <= 5 && data.confidence > 70) {
             if (raw === lastBibRef.current) {
               consecutiveRef.current += 1
@@ -144,6 +141,23 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     }
   }, [stopCamera, ensureWorker])
 
+  // Auto-start on mount
+  useEffect(() => {
+    startCamera()
+  }, [startCamera])
+
+  // Auto-reset countdown after result
+  useEffect(() => {
+    if (uiState.status !== 'result') { setCountdown(null); return }
+    setCountdown(AUTO_RESET_SECONDS)
+    const tick = setInterval(() => {
+      setCountdown((prev) => (prev !== null && prev > 1 ? prev - 1 : null))
+    }, 1000)
+    const reset = setTimeout(() => startCamera(), AUTO_RESET_SECONDS * 1000)
+    return () => { clearInterval(tick); clearTimeout(reset) }
+  }, [uiState.status, startCamera])
+
+  // Terminate worker on unmount
   useEffect(() => {
     return () => {
       stopCamera()
@@ -158,11 +172,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     setUiState({ status: 'result', result, bib })
   }
 
-  function reset() {
-    setUiState({ status: 'idle' })
-    setDebugInfo(null)
-  }
-
   function openManual() {
     stopCamera()
     setUiState({ status: 'manual', value: '' })
@@ -170,35 +179,13 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-muted/30 px-4 py-8">
-      <div className="mb-8 text-center">
+      <div className="mb-6 text-center">
         <p className="text-muted-foreground">{eventName}</p>
         <h1 className="text-2xl font-bold">{stationName}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Self Check-in</p>
       </div>
 
       <div className="w-full max-w-sm">
-        {uiState.status === 'idle' && (
-          <div className="flex flex-col items-center gap-6">
-            <div className="rounded-2xl border-2 border-dashed border-muted-foreground/30 p-10 text-center">
-              <p className="text-5xl mb-4">📸</p>
-              <p className="text-lg font-medium">สแกนหมายเลข BIB</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                กดปุ่มด้านล่างเพื่อเปิดกล้องและสแกน BIB ของท่าน
-              </p>
-            </div>
-            <Button size="lg" className="w-full h-14 text-lg" onClick={startCamera}>
-              เปิดกล้อง
-            </Button>
-            <button
-              type="button"
-              className="text-sm text-muted-foreground underline underline-offset-2"
-              onClick={openManual}
-            >
-              กรอกหมายเลข BIB เอง
-            </button>
-          </div>
-        )}
-
         {uiState.status === 'scanning' && (
           <div className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl bg-black aspect-[3/4]">
@@ -215,29 +202,10 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 <div className="flex-[0.35] bg-black/40" />
               </div>
             </div>
-
-            {/* Debug: แสดง canvas crop ที่ส่งให้ OCR */}
-            <div className="rounded-xl border bg-muted/50 p-3 text-xs space-y-1">
-              <p className="font-semibold text-muted-foreground">Debug — ภาพที่ OCR เห็น</p>
-              <canvas ref={canvasRef} className="w-full rounded border" />
-              {debugInfo ? (
-                <>
-                  <p>กล้อง: <span className="font-mono">{debugInfo.videoDim}</span></p>
-                  <p>อ่านได้: <span className="font-mono font-bold">{debugInfo.text}</span></p>
-                  <p>confidence: <span className="font-mono">{debugInfo.confidence}%</span></p>
-                </>
-              ) : (
-                <p className="text-muted-foreground">รอผล OCR...</p>
-              )}
-            </div>
-
-            <Button variant="outline" size="lg" className="w-full"
-              onClick={() => { stopCamera(); reset() }}>
-              ยกเลิก
-            </Button>
+            <canvas ref={canvasRef} className="hidden" />
             <button
               type="button"
-              className="text-sm text-muted-foreground underline underline-offset-2 text-center"
+              className="text-sm text-muted-foreground underline underline-offset-2 text-center py-1"
               onClick={openManual}
             >
               กรอกหมายเลข BIB เอง
@@ -255,12 +223,16 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 placeholder="เช่น 1001"
                 className="text-center text-2xl h-14 font-mono"
                 value={uiState.value}
-                onChange={(e) => setUiState({ status: 'manual', value: e.target.value.replace(/\D/g, '') })}
+                onChange={(e) =>
+                  setUiState({ status: 'manual', value: e.target.value.replace(/\D/g, '') })
+                }
                 autoFocus
               />
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 h-14" onClick={reset}>ยกเลิก</Button>
+              <Button variant="outline" className="flex-1 h-14" onClick={startCamera}>
+                ยกเลิก
+              </Button>
               <Button
                 className="flex-1 h-14 text-lg"
                 disabled={uiState.value.length < 1}
@@ -269,13 +241,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 ยืนยัน
               </Button>
             </div>
-            <button
-              type="button"
-              className="text-sm text-muted-foreground underline underline-offset-2 text-center"
-              onClick={startCamera}
-            >
-              กลับไปสแกน
-            </button>
           </div>
         )}
 
@@ -287,8 +252,12 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
               <p className="mt-3 text-sm text-muted-foreground">ยืนยันหมายเลขนี้ถูกต้องหรือไม่?</p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 h-14" onClick={startCamera}>สแกนใหม่</Button>
-              <Button className="flex-1 h-14 text-lg" onClick={() => handleConfirm(uiState.bib)}>ยืนยัน</Button>
+              <Button variant="outline" className="flex-1 h-14" onClick={startCamera}>
+                สแกนใหม่
+              </Button>
+              <Button className="flex-1 h-14 text-lg" onClick={() => handleConfirm(uiState.bib)}>
+                ยืนยัน
+              </Button>
             </div>
           </div>
         )}
@@ -300,14 +269,36 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
         )}
 
         {uiState.status === 'result' && (
-          <CheckinResultCard result={uiState.result} bib={uiState.bib} onReset={reset} />
+          <div className="flex flex-col gap-3">
+            <CheckinResultCard
+              result={uiState.result}
+              bib={uiState.bib}
+              onReset={startCamera}
+            />
+            {countdown !== null && (
+              <p className="text-center text-sm text-muted-foreground">
+                กลับสู่การสแกนใน {countdown} วินาที...
+              </p>
+            )}
+          </div>
         )}
 
         {uiState.status === 'error' && (
           <div className="rounded-2xl border-2 border-destructive bg-destructive/10 p-8 text-center">
             <p className="text-xl font-bold text-destructive">เกิดข้อผิดพลาด</p>
             <p className="mt-2 text-muted-foreground">{uiState.message}</p>
-            <Button className="mt-6 w-full" onClick={reset}>ลองอีกครั้ง</Button>
+            <div className="mt-6 flex flex-col gap-3">
+              <Button className="w-full" onClick={startCamera}>
+                ลองอีกครั้ง
+              </Button>
+              <button
+                type="button"
+                className="text-sm text-muted-foreground underline underline-offset-2"
+                onClick={openManual}
+              >
+                กรอกหมายเลข BIB เอง
+              </button>
+            </div>
           </div>
         )}
       </div>
