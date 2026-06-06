@@ -27,7 +27,7 @@ export function isValidBib(bib: string): boolean {
 }
 
 function liffUrl(eventId: string, bib: string): string {
-  return `${LIFF_BASE}/${eventId}?bib=${encodeURIComponent(bib)}`
+  return `${LIFF_BASE}?eventId=${encodeURIComponent(eventId)}&bib=${encodeURIComponent(bib)}`
 }
 
 // ─── Entry points ──────────────────────────────────────────────────────────

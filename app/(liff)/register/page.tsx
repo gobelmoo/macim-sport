@@ -16,13 +16,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Props {
-  params: Promise<{ eventId: string }>
-  searchParams: Promise<{ bib?: string }>
+  searchParams: Promise<{ eventId?: string; bib?: string }>
 }
 
-export default function RegisterPage({ params, searchParams }: Props) {
-  const { eventId } = use(params)
-  const { bib = '' } = use(searchParams)
+export default function RegisterPage({ searchParams }: Props) {
+  const { eventId = '', bib = '' } = use(searchParams)
   const [idToken, setIdToken] = useState<string | null>(null)
   const [firstName, setFirstName] = useState('')
   const [gender, setGender] = useState('')
@@ -59,6 +57,14 @@ export default function RegisterPage({ params, searchParams }: Props) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">กำลังโหลด...</p>
+      </div>
+    )
+  }
+
+  if (!eventId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <p className="text-center text-red-600">ลิงก์ไม่ถูกต้อง กรุณาขอลิงก์ใหม่จาก LINE OA</p>
       </div>
     )
   }
