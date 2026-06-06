@@ -246,6 +246,7 @@ export default function RegisterPage() {
               <SelectContent>
                 <SelectItem value="male">ชาย</SelectItem>
                 <SelectItem value="female">หญิง</SelectItem>
+                <SelectItem value="lgbtq">LGBTQ+</SelectItem>
                 <SelectItem value="other">อื่นๆ</SelectItem>
               </SelectContent>
             </Select>

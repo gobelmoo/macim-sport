@@ -74,7 +74,8 @@ export async function registerViaLine(
   const firstName = (formData.get('firstName') as string).trim()
   const lastName = (formData.get('lastName') as string).trim()
   const dateOfBirth = formData.get('dateOfBirth') as string
-  const gender = formData.get('gender') as 'male' | 'female' | 'other'
+  const rawGender = formData.get('gender') as string
+  const gender = (rawGender === 'lgbtq' ? 'other' : rawGender) as 'male' | 'female' | 'other'
 
   if (!liffIdToken) {
     return { ok: false, error: 'ไม่พบ ID Token กรุณาเปิดผ่าน LINE ใหม่อีกครั้ง' }
