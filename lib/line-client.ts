@@ -27,20 +27,28 @@ export async function verifyLineSignature(body: string, signature: string): Prom
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function replyMessage(replyToken: string, messages: any[]): Promise<void> {
-  await fetch(LINE_REPLY_URL, {
+  const res = await fetch(LINE_REPLY_URL, {
     method: 'POST',
     headers: authHeader(),
     body: JSON.stringify({ replyToken, messages }),
   })
+  if (!res.ok) {
+    const body = await res.text()
+    console.error('[replyMessage] LINE API error', res.status, body)
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function pushMessage(to: string, messages: any[]): Promise<void> {
-  await fetch(LINE_PUSH_URL, {
+  const res = await fetch(LINE_PUSH_URL, {
     method: 'POST',
     headers: authHeader(),
     body: JSON.stringify({ to, messages }),
   })
+  if (!res.ok) {
+    const body = await res.text()
+    console.error('[pushMessage] LINE API error', res.status, body)
+  }
 }
 
 export async function verifyLiffIdToken(idToken: string): Promise<string> {
