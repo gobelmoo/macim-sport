@@ -34,7 +34,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
   const historyRef = useRef<string[]>([])
   const [uiState, setUiState] = useState<UIState>({ status: 'idle' })
   const [countdown, setCountdown] = useState<number | null>(null)
-  const [debug, setDebug] = useState<{ text: string; confidence: number; dim: string } | null>(null)
 
   const stopCamera = useCallback(() => {
     if (intervalRef.current) {
@@ -75,7 +74,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
   const startCamera = useCallback(async () => {
     setUiState({ status: 'scanning' })
-    setDebug(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 1280 } },
@@ -119,12 +117,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
 
           const { data } = await worker.recognize(canvas)
           const raw = data.text.replace(/[^A-Z0-9-]/gi, '').trim().toUpperCase()
-
-          setDebug({
-            text: raw || '(ไม่พบ)',
-            confidence: Math.round(data.confidence),
-            dim: `${w}×${h}`,
-          })
 
           if (raw.length >= 2 && raw.length <= 10) {
             const history = historyRef.current
@@ -239,20 +231,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
                 <div className="flex-[0.35] bg-black/40" />
               </div>
             </div>
-            {/* diagnostic panel */}
-            <div className="rounded-xl border bg-muted/60 p-3 text-xs space-y-1">
-              <p className="font-semibold text-muted-foreground">ภาพที่ OCR เห็น (crop zone)</p>
-              <canvas ref={canvasRef} className="w-full rounded border" />
-              {debug ? (
-                <>
-                  <p>กล้อง: <span className="font-mono">{debug.dim}</span></p>
-                  <p>อ่านได้: <span className="font-mono font-bold">{debug.text}</span></p>
-                  <p>confidence: <span className="font-mono">{debug.confidence}%</span></p>
-                </>
-              ) : (
-                <p className="text-muted-foreground">รอผล OCR...</p>
-              )}
-            </div>
+            <canvas ref={canvasRef} className="hidden" />
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 h-12" onClick={resetToIdle}>
                 ยกเลิก
