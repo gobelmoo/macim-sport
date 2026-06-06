@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Calendar, Plus } from 'lucide-react'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS } from '@/lib/rbac'
-import { listEvents } from '@/db/queries/events'
+import { listEventsWithCounts } from '@/db/queries/events'
 import { Button } from '@/components/ui/button'
 import { EventsTable } from './_components/events-table'
 
@@ -20,7 +20,7 @@ export default async function EventsPage() {
   if (!canViewAll && !canViewOwn) redirect('/dashboard')
 
   const scopedSponsorId = canViewAll ? undefined : (sponsorId ?? undefined)
-  const eventList = await listEvents(scopedSponsorId)
+  const eventList = await listEventsWithCounts(scopedSponsorId)
   const canCreate = canAccess(PERMISSIONS.EVENT_CREATE, authz)
 
   return (

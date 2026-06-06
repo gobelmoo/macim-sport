@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { EventRow } from '@/db/queries/events'
+import type { EventRowWithCount } from '@/db/queries/events'
 import { EventStatusBadge, EventTypeBadge, STATUS_LABELS } from './event-badges'
 
 const PAGE_SIZE = 20
@@ -50,7 +50,7 @@ const TYPE_OPTIONS = [
 ] as const
 
 interface Props {
-  events: EventRow[]
+  events: EventRowWithCount[]
   canCreate: boolean
 }
 
@@ -172,6 +172,7 @@ export function EventsTable({ events, canCreate }: Props) {
                 <TableHead>สถานะ</TableHead>
                 <TableHead>วันที่เริ่ม</TableHead>
                 <TableHead>วันที่สิ้นสุด</TableHead>
+                <TableHead className="text-right">นักกีฬา</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -201,6 +202,18 @@ export function EventsTable({ events, canCreate }: Props) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {format(new Date(event.endDate), 'dd/MM/yyyy')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {event.registrationCount > 0 ? (
+                      <Link
+                        href={`/dashboard/events/${event.eventId}/athletes`}
+                        className="text-sm font-medium tabular-nums text-primary hover:underline"
+                      >
+                        {event.registrationCount.toLocaleString('th-TH')}
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
