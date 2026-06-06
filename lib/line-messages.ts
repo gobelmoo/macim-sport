@@ -30,7 +30,7 @@ function postbackData(obj: Record<string, string>): string {
 
 function eventQuickReply(events: ActiveEvent[]): { items: QuickReplyItem[] } {
   return {
-    items: events.map((e) => ({
+    items: events.slice(0, 13).map((e) => ({
       type: 'action',
       action: {
         type: 'postback',

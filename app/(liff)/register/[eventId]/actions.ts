@@ -9,6 +9,7 @@ import {
   insertAthleteConsent,
 } from '@/db/queries/line'
 import { successMessage } from '@/lib/line-messages'
+import { isValidBib } from '@/lib/line-state'
 
 export type RegisterState =
   | null
@@ -33,6 +34,10 @@ export async function registerViaLine(
 
   if (!bib || !firstName || !lastName || !dateOfBirth || !gender) {
     return { ok: false, error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }
+  }
+
+  if (!isValidBib(bib)) {
+    return { ok: false, error: 'หมายเลข BIB ไม่ถูกต้อง' }
   }
 
   let lineUserId: string
