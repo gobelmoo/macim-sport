@@ -27,6 +27,7 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
   const isActive = event.status === 'active'
   const headerBg = isActive ? '#1D86E8' : '#888888'
   const headerText = isActive ? '🎯 ลงทะเบียนรับบริการฟรี' : '🔜 เร็วๆนี้'
+  const encodedId = encodeURIComponent(event.eventId)
 
   const bodyContents: any[] = [
     { type: 'text', text: event.eventName, weight: 'bold', wrap: true },
@@ -50,7 +51,7 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
       action: {
         type: 'uri',
         label: 'ลงทะเบียนรับสิทธิ์ฟรี',
-        uri: `${liffBase}?eventId=${encodeURIComponent(event.eventId)}`,
+        uri: `${liffBase}?eventId=${encodedId}`,
       },
     })
   }
@@ -60,7 +61,7 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
     action: {
       type: 'uri',
       label: 'ดูรายละเอียด',
-      uri: `${appBase}/event/${encodeURIComponent(event.eventId)}`,
+      uri: `${appBase}/event/${encodedId}`,
     },
   })
 
@@ -102,6 +103,7 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function registeredBubble(event: { eventId: string; eventName: string; bibNumber: string }, liffBase: string, appBase: string): any {
+  const encodedId = encodeURIComponent(event.eventId)
   return {
     type: 'bubble',
     header: {
@@ -131,7 +133,7 @@ function registeredBubble(event: { eventId: string; eventName: string; bibNumber
           action: {
             type: 'uri',
             label: 'รับสิทธิ์แล้ว ✓',
-            uri: `${appBase}/event/${encodeURIComponent(event.eventId)}`,
+            uri: `${appBase}/event/${encodedId}`,
           },
         },
         {
@@ -140,7 +142,7 @@ function registeredBubble(event: { eventId: string; eventName: string; bibNumber
           action: {
             type: 'uri',
             label: 'จัดการข้อมูล',
-            uri: `${liffBase}?eventId=${encodeURIComponent(event.eventId)}&bib=${encodeURIComponent(event.bibNumber)}`,
+            uri: `${liffBase}?eventId=${encodedId}&bib=${encodeURIComponent(event.bibNumber)}`,
           },
         },
       ],

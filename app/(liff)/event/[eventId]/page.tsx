@@ -26,9 +26,6 @@ export default async function LiffEventDetailPage({ params }: Props) {
       })
     : null
 
-  const liffId = process.env.NEXT_PUBLIC_LIFF_ID!
-  const liffBase = `https://liff.line.me/${liffId}`
-
   return (
     <div className="min-h-screen bg-background">
       {/* Logo */}
@@ -100,12 +97,7 @@ export default async function LiffEventDetailPage({ params }: Props) {
 
         {/* CTA */}
         <div className="pt-4">
-          <EventCta
-            eventId={eventId}
-            eventStatus={event.status as 'published' | 'active' | 'closed'}
-            liffId={liffId}
-            liffBase={liffBase}
-          />
+          <EventCta eventId={eventId} eventStatus={event.status} />
         </div>
       </div>
     </div>
