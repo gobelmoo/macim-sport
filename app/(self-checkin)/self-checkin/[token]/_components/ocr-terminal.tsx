@@ -118,7 +118,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
               consecutiveRef.current = 1
             }
 
-            if (consecutiveRef.current >= 2) {
+            if (consecutiveRef.current >= 1) {
               stopCamera()
               setUiState({ status: 'confirming', bib: raw })
               return
