@@ -52,7 +52,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     const { createWorker } = await import('tesseract.js')
     workerRef.current = await createWorker('eng', 1, { logger: () => {} })
     await workerRef.current.setParameters({
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-',
       tessedit_pageseg_mode: '7' as never,
     })
   }, [])
@@ -102,7 +102,7 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
           ctx.drawImage(video, 0, cropY, w, cropH, 0, 0, w, cropH)
 
           const { data } = await worker.recognize(canvas)
-          const raw = data.text.replace(/[^A-Z0-9]/gi, '').trim().toUpperCase()
+          const raw = data.text.replace(/[^A-Z0-9-]/gi, '').trim().toUpperCase()
 
           setDebug({
             text: raw || '(ไม่พบ)',
