@@ -91,7 +91,7 @@ export default async function EventDetailPage({ params }: Props) {
 
   const boundCreateStation = createStationAction.bind(null, id)
 
-  // ─── Tab content ────────────────────────────────────────────────────────────
+  // ─── Page sections ──────────────────────────────────────────────────────────
 
   const infoContent = (
     <Card>
