@@ -5,7 +5,6 @@ import {
   getLineSession,
   getRegisteredEventIds,
   getRegistrationByBibAndEvent,
-  insertAthleteConsent,
   linkAthleteLineId,
   upsertLineSession,
 } from '@/db/queries/line'
@@ -158,6 +157,10 @@ export async function handlePostback(
 
   if (action === 'confirm_yes') {
     if (!session?.eventId || !session.bibNumber) {
+      await startFlow(lineUserId, replyToken)
+      return
+    }
+    if (session.state !== 'awaiting_confirm') {
       await startFlow(lineUserId, replyToken)
       return
     }
