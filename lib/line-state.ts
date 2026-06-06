@@ -3,6 +3,7 @@ import {
   getAthleteByLineUserId,
   getEventById,
   getLineSession,
+  getRegisteredActiveEventsWithBib,
   getRegisteredEventIds,
   getRegistrationByBibAndEvent,
   linkAthleteLineId,
@@ -11,6 +12,7 @@ import {
 import { replyMessage } from '@/lib/line-client'
 import {
   askBibMessage,
+  athleteSummaryFlex,
   confirmRecordFlex,
   consentFlex,
   errorMessage,
@@ -45,12 +47,26 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
   if (existingAthlete) {
     const registeredIds = await getRegisteredEventIds(existingAthlete.athleteId)
     const available = allActive.filter((e) => !registeredIds.includes(e.eventId))
+    const registeredActive = allActive.filter((e) => registeredIds.includes(e.eventId))
 
     console.log('[startFlow] returning athlete', {
       registeredCount: registeredIds.length,
       availableCount: available.length,
     })
 
+    // Has at least 1 registered active event → show combined or registered-only carousel
+    if (registeredActive.length > 0) {
+      const registeredWithBib = await getRegisteredActiveEventsWithBib(existingAthlete.athleteId)
+      if (available.length > 0) {
+        await upsertLineSession(lineUserId, { state: 'awaiting_event', eventId: null })
+      }
+      await replyMessage(replyToken, [
+        athleteSummaryFlex(existingAthlete.firstName, registeredWithBib, available, LIFF_BASE),
+      ])
+      return
+    }
+
+    // No registered active events → existing behavior
     if (available.length === 0) {
       await replyMessage(replyToken, [errorMessage('no_events')])
       return

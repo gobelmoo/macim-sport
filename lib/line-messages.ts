@@ -223,3 +223,101 @@ const ERROR_TEXTS: Record<ErrorType, string> = {
 export function errorMessage(type: ErrorType): LineMessage {
   return { type: 'text', text: ERROR_TEXTS[type] }
 }
+
+// ─── Athlete Summary Flex ──────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function availableBubble(event: ActiveEvent): any {
+  return {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#1D86E8',
+      paddingAll: 'md',
+      contents: [{ type: 'text', text: '🏃 เปิดรับสมัคร', color: '#ffffff', weight: 'bold', size: 'sm' }],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: event.eventName, weight: 'bold', wrap: true },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [{
+        type: 'button',
+        style: 'primary',
+        action: {
+          type: 'postback',
+          label: 'ลงทะเบียน',
+          data: postbackData({ action: 'select_event', eventId: event.eventId }),
+        },
+      }],
+    },
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function registeredBubble(event: { eventId: string; eventName: string; bibNumber: string }, liffBase: string): any {
+  return {
+    type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#06C755',
+      paddingAll: 'md',
+      contents: [{ type: 'text', text: '✅ ลงทะเบียนแล้ว', color: '#ffffff', weight: 'bold', size: 'sm' }],
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      contents: [
+        { type: 'text', text: event.eventName, weight: 'bold', wrap: true },
+        { type: 'text', text: `BIB: ${event.bibNumber}`, size: 'sm', color: '#555555' },
+      ],
+    },
+    footer: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [{
+        type: 'button',
+        style: 'secondary',
+        action: {
+          type: 'uri',
+          label: 'ดูรายละเอียด / แก้ไขข้อมูล',
+          uri: `${liffBase}?eventId=${encodeURIComponent(event.eventId)}&bib=${encodeURIComponent(event.bibNumber)}`,
+        },
+      }],
+    },
+  }
+}
+
+export function athleteSummaryFlex(
+  firstName: string,
+  registered: { eventId: string; eventName: string; bibNumber: string }[],
+  available: ActiveEvent[],
+  liffBase: string,
+): LineMessage {
+  const bubbles = [
+    ...available.map((e) => availableBubble(e)),
+    ...registered.map((e) => registeredBubble(e, liffBase)),
+  ].slice(0, 10)
+
+  const totalCount = registered.length + available.length
+  const altText = `ยินดีต้อนรับกลับ ${firstName} · ${totalCount} งาน — กดเพื่อดูรายละเอียด`
+
+  if (bubbles.length === 1) {
+    return { type: 'flex', altText, contents: bubbles[0] }
+  }
+
+  return {
+    type: 'flex',
+    altText,
+    contents: { type: 'carousel', contents: bubbles },
+  }
+}

@@ -239,3 +239,25 @@ export async function updateRegistrationBib(
       ),
     )
 }
+
+export async function getRegisteredActiveEventsWithBib(athleteId: string): Promise<{
+  eventId: string
+  eventName: string
+  bibNumber: string
+}[]> {
+  return db
+    .select({
+      eventId: events.eventId,
+      eventName: events.eventName,
+      bibNumber: athleteEventRegistrations.bibNumber,
+    })
+    .from(athleteEventRegistrations)
+    .innerJoin(events, eq(athleteEventRegistrations.eventId, events.eventId))
+    .where(
+      and(
+        eq(athleteEventRegistrations.athleteId, athleteId),
+        inArray(events.status, ['published', 'active']),
+      ),
+    )
+    .orderBy(events.startDate)
+}
