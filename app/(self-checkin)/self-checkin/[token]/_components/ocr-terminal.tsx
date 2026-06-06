@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { BibKeyboard } from './bib-keyboard'
 import { performSelfCheckin } from '../actions'
 import { CheckinResultCard } from '@/app/_components/checkin-result-card'
 import type { CheckinResult } from '@/app/(checkin)/checkin/[stationId]/types'
@@ -45,6 +45,11 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
       videoRef.current.srcObject = null
     }
   }, [])
+
+  const openManual = useCallback(() => {
+    stopCamera()
+    setUiState({ status: 'manual', value: '' })
+  }, [stopCamera])
 
   const ensureWorker = useCallback(async () => {
     if (workerRef.current) return
@@ -163,6 +168,13 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     return () => { clearInterval(tick); clearTimeout(reset) }
   }, [uiState.status, startCamera])
 
+  // Auto-open keyboard after 15s of scanning without result
+  useEffect(() => {
+    if (uiState.status !== 'scanning') return
+    const t = setTimeout(openManual, 15_000)
+    return () => clearTimeout(t)
+  }, [uiState.status, openManual])
+
   // Terminate worker on unmount
   useEffect(() => {
     return () => {
@@ -176,11 +188,6 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
     setUiState({ status: 'submitting', bib })
     const result = await performSelfCheckin({ token, bibNumber: bib })
     setUiState({ status: 'result', result, bib })
-  }
-
-  function openManual() {
-    stopCamera()
-    setUiState({ status: 'manual', value: '' })
   }
 
   return (
@@ -233,34 +240,12 @@ export function OcrTerminal({ token, eventName, stationName }: Props) {
         )}
 
         {uiState.status === 'manual' && (
-          <div className="flex flex-col gap-6">
-            <div className="rounded-2xl border-2 border-dashed border-muted-foreground/30 p-8 text-center">
-              <p className="text-lg font-medium mb-4">กรอกหมายเลข BIB</p>
-              <Input
-                type="number"
-                inputMode="numeric"
-                placeholder="เช่น 1001"
-                className="text-center text-2xl h-14 font-mono"
-                value={uiState.value}
-                onChange={(e) =>
-                  setUiState({ status: 'manual', value: e.target.value.replace(/\D/g, '') })
-                }
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 h-14" onClick={startCamera}>
-                ยกเลิก
-              </Button>
-              <Button
-                className="flex-1 h-14 text-lg"
-                disabled={uiState.value.length < 1}
-                onClick={() => handleConfirm(uiState.value)}
-              >
-                ยืนยัน
-              </Button>
-            </div>
-          </div>
+          <BibKeyboard
+            value={uiState.value}
+            onChange={(v) => setUiState({ status: 'manual', value: v })}
+            onConfirm={() => handleConfirm(uiState.value)}
+            onBack={startCamera}
+          />
         )}
 
         {uiState.status === 'confirming' && (
