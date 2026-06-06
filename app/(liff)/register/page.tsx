@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import liff from '@line/liff'
 import { fetchAthleteProfile, registerViaLine } from './actions'
 import { Button } from '@/components/ui/button'
@@ -15,25 +15,17 @@ import {
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-interface Props {
-  searchParams: Promise<{ eventId?: string; bib?: string }>
-}
-
-export default function RegisterPage({ searchParams }: Props) {
-  const { eventId: eventIdFromServer = '', bib: bibFromUrl = '' } = use(searchParams)
-
+export default function RegisterPage() {
   const [idToken, setIdToken] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [liffError, setLiffError] = useState<string | null>(null)
-
-  // eventId starts from server props; updated after liff.init() restores liff.state params
-  const [eventId, setEventId] = useState(eventIdFromServer)
+  const [eventId, setEventId] = useState('')
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [gender, setGender] = useState('')
-  const [bib, setBib] = useState(bibFromUrl)
+  const [bib, setBib] = useState('')
 
   const [state, action, pending] = useActionState(registerViaLine, null)
 
@@ -46,30 +38,31 @@ export default function RegisterPage({ searchParams }: Props) {
           return
         }
         // After liff.init(), LIFF restores the original URL via replaceState.
-        // Read from window.location so we pick up the eventId even when the
-        // first page load had liff.state in the URL (new-user login redirect).
+        // Read from window.location to get params even when the first load had
+        // liff.state in the URL (new-user login redirect path).
         const params = new URLSearchParams(window.location.search)
-        const resolvedEventId = params.get('eventId') || eventIdFromServer
-        setEventId(resolvedEventId)
-
+        const resolvedEventId = params.get('eventId') ?? ''
+        const resolvedBib = params.get('bib') ?? ''
         const token = liff.getIDToken()
+
+        const profile = (resolvedEventId && token)
+          ? await fetchAthleteProfile(token, resolvedEventId)
+          : null
+
+        if (profile) {
+          setFirstName(profile.firstName)
+          setLastName(profile.lastName)
+          setDateOfBirth(profile.dateOfBirth)
+          setGender(profile.gender)
+        }
+        setBib(profile?.existingBib ?? resolvedBib)
+
+        setEventId(resolvedEventId)
         setIdToken(token)
         setReady(true)
       })
       .catch(() => setLiffError('ไม่สามารถเชื่อมต่อ LINE ได้ กรุณาเปิดผ่าน LINE'))
   }, [])
-
-  useEffect(() => {
-    if (!idToken || !eventId) return
-    fetchAthleteProfile(idToken, eventId).then((profile) => {
-      if (!profile) return
-      setFirstName(profile.firstName)
-      setLastName(profile.lastName)
-      setDateOfBirth(profile.dateOfBirth)
-      setGender(profile.gender)
-      setBib(profile.existingBib ?? bibFromUrl)
-    })
-  }, [idToken, eventId])
 
   if (liffError) {
     return (

@@ -2,7 +2,6 @@ import {
   getActiveEvents,
   getAthleteByLineUserId,
   getRegisteredActiveEventsWithBib,
-  getRegisteredEventIds,
 } from '@/db/queries/line'
 import { replyMessage } from '@/lib/line-client'
 import {
@@ -19,8 +18,10 @@ export function isValidBib(bib: string): boolean {
 }
 
 export async function startFlow(lineUserId: string, replyToken: string): Promise<void> {
-  const existingAthlete = await getAthleteByLineUserId(lineUserId)
-  const allActive = await getActiveEvents()
+  const [existingAthlete, allActive] = await Promise.all([
+    getAthleteByLineUserId(lineUserId),
+    getActiveEvents(),
+  ])
 
   console.log('[startFlow]', {
     lineUserId,
@@ -29,17 +30,16 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
   })
 
   if (existingAthlete) {
-    const registeredIds = await getRegisteredEventIds(existingAthlete.athleteId)
-    const available = allActive.filter((e) => !registeredIds.includes(e.eventId))
-    const registeredActive = allActive.filter((e) => registeredIds.includes(e.eventId))
+    const registeredWithBib = await getRegisteredActiveEventsWithBib(existingAthlete.athleteId)
+    const registeredIds = new Set(registeredWithBib.map((e) => e.eventId))
+    const available = allActive.filter((e) => !registeredIds.has(e.eventId))
 
     console.log('[startFlow] returning athlete', {
-      registeredCount: registeredIds.length,
+      registeredCount: registeredWithBib.length,
       availableCount: available.length,
     })
 
-    if (registeredActive.length > 0) {
-      const registeredWithBib = await getRegisteredActiveEventsWithBib(existingAthlete.athleteId)
+    if (registeredWithBib.length > 0) {
       await replyMessage(replyToken, [
         athleteSummaryFlex(existingAthlete.firstName, registeredWithBib, available, LIFF_BASE),
       ])

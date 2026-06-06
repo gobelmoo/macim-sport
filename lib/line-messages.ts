@@ -103,14 +103,18 @@ function flexCarousel(bubbles: any[], altText: string): FlexMessage {
 
 // ─── Message Builders ──────────────────────────────────────────────────────
 
-export function welcomeNewMessage(events: ActiveEvent[], liffBase: string): LineMessage {
+function availableEventsCarousel(events: ActiveEvent[], liffBase: string, firstName?: string): FlexMessage {
   const bubbles = events.slice(0, 10).map((e) => availableBubble(e, liffBase))
-  return flexCarousel(bubbles, CTA_TEXT)
+  const altText = firstName ? `${firstName} — ${CTA_TEXT}` : CTA_TEXT
+  return flexCarousel(bubbles, altText)
+}
+
+export function welcomeNewMessage(events: ActiveEvent[], liffBase: string): LineMessage {
+  return availableEventsCarousel(events, liffBase)
 }
 
 export function welcomeBackMessage(firstName: string, events: ActiveEvent[], liffBase: string): LineMessage {
-  const bubbles = events.slice(0, 10).map((e) => availableBubble(e, liffBase))
-  return flexCarousel(bubbles, `${firstName} — ${CTA_TEXT}`)
+  return availableEventsCarousel(events, liffBase, firstName)
 }
 
 export function successMessage(firstName: string, bib: string, eventName: string): LineMessage {
@@ -143,6 +147,5 @@ export function athleteSummaryFlex(
     ...registered.map((e) => registeredBubble(e, liffBase)),
   ].slice(0, 10)
 
-  const altText = `${firstName} — ${CTA_TEXT}`
-  return flexCarousel(bubbles, altText)
+  return flexCarousel(bubbles, `${firstName} — ${CTA_TEXT}`)
 }
