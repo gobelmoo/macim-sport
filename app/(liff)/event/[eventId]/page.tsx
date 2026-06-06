@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { MapPin, Calendar, User } from 'lucide-react'
+import sanitizeHtml from 'sanitize-html'
 import { getEventDetail } from '@/db/queries/events'
 import { listGalleryImages } from '@/db/queries/event_gallery_images'
 
@@ -16,6 +17,13 @@ export default async function LiffEventDetailPage({ params }: Props) {
   if (!event || event.status === 'draft' || event.status === 'archived') {
     notFound()
   }
+
+  const sanitizedDescription = event.longDescription
+    ? sanitizeHtml(event.longDescription, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h2', 'h3']),
+        allowedAttributes: { a: ['href', 'target', 'rel'] },
+      })
+    : null
 
   const liffRegisterUrl = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}?eventId=${eventId}`
 
@@ -60,10 +68,10 @@ export default async function LiffEventDetailPage({ params }: Props) {
         </div>
 
         {/* Long Description */}
-        {event.longDescription && (
+        {sanitizedDescription && (
           <div
             className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: event.longDescription }}
+            dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
           />
         )}
 

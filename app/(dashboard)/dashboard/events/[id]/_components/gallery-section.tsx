@@ -22,8 +22,10 @@ export function GallerySection({ eventId, initialImages }: GallerySectionProps) 
   const [images, setImages] = useState<GalleryImageRow[]>(initialImages)
   const [isPending, startTransition] = useTransition()
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [uploadError, setUploadError] = useState('')
 
   async function handleAddImage(url: string) {
+    setUploadError('')
     const result = await addGalleryImageAction(eventId, url, null)
     if ('imageId' in result) {
       setImages((prev) => [
@@ -36,6 +38,8 @@ export function GallerySection({ eventId, initialImages }: GallerySectionProps) 
           sortOrder: prev.length,
         },
       ])
+    } else {
+      setUploadError(result.error)
     }
   }
 
@@ -123,6 +127,7 @@ export function GallerySection({ eventId, initialImages }: GallerySectionProps) 
           label="เพิ่มรูป Gallery"
           onUpload={handleAddImage}
         />
+        {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
       </div>
     </div>
   )

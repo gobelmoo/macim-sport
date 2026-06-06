@@ -35,14 +35,18 @@ export async function POST(req: NextRequest) {
   const key = `events/${crypto.randomUUID()}.${ext}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  await r2.send(
-    new PutObjectCommand({
-      Bucket: R2_BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-    }),
-  )
+  try {
+    await r2.send(
+      new PutObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: file.type,
+      }),
+    )
+  } catch {
+    return NextResponse.json({ error: 'Upload to storage failed' }, { status: 500 })
+  }
 
   return NextResponse.json({ url: `${R2_PUBLIC_URL}/${key}` })
 }
