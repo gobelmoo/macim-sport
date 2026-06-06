@@ -35,7 +35,6 @@ export function EditStationDialog({ station, action }: Props) {
             defaultValues={{
               stationType: station.stationType,
               stationName: station.stationName,
-              stampOnAddFriend: station.stampOnAddFriend,
             }}
             submitLabel="บันทึก"
             onSuccess={() => setOpen(false)}

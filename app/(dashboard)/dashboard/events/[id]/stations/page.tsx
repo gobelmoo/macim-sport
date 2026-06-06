@@ -109,7 +109,6 @@ export default async function StationsPage({ params }: Props) {
               <TableRow>
                 <TableHead>ชื่อ Station</TableHead>
                 <TableHead>ประเภท</TableHead>
-                <TableHead>Stamp เมื่อ Add Friend</TableHead>
                 <TableHead>สถานะ</TableHead>
                 <TableHead className="text-right">Self Check-in</TableHead>
                 {canManage && (
@@ -136,13 +135,6 @@ export default async function StationsPage({ params }: Props) {
                       <Badge variant={STATION_TYPE_VARIANT[station.stationType] ?? 'outline'}>
                         {STATION_TYPE_LABEL[station.stationType] ?? station.stationType}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {station.stampOnAddFriend ? (
-                        <Badge variant="secondary">เปิดใช้งาน</Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={station.status === 'active' ? 'default' : 'outline'}>

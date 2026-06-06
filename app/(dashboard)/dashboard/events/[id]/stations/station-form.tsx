@@ -11,7 +11,6 @@ type StationFormProps = {
   defaultValues?: {
     stationType?: string
     stationName?: string
-    stampOnAddFriend?: boolean
   }
   submitLabel?: string
   onSuccess?: () => void
@@ -70,17 +69,6 @@ export function StationForm({
             {state.fieldErrors.stationName[0]}
           </p>
         )}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <input
-          id="stampOnAddFriend"
-          name="stampOnAddFriend"
-          type="checkbox"
-          defaultChecked={defaultValues?.stampOnAddFriend ?? false}
-          className="size-4 rounded border border-input"
-        />
-        <Label htmlFor="stampOnAddFriend">ประทับตราเมื่อ Add Friend LINE OA</Label>
       </div>
 
       <Button type="submit" disabled={isPending} size="sm">

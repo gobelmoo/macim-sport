@@ -1,4 +1,4 @@
-import { boolean, pgEnum, pgTable, text } from 'drizzle-orm/pg-core'
+import { pgEnum, pgTable, text } from 'drizzle-orm/pg-core'
 import { createdAtColumn, idColumn } from './_common'
 import { events } from './events'
 
@@ -17,7 +17,6 @@ export const stations = pgTable('stations', {
     .references(() => events.eventId, { onDelete: 'cascade' }),
   stationType: stationTypeEnum().notNull(),
   stationName: text().notNull(),
-  stampOnAddFriend: boolean().default(false).notNull(),
   status: stationStatusEnum().default('active').notNull(),
   createdAt: createdAtColumn(),
 })

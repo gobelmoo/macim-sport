@@ -8,7 +8,6 @@ export type StationRow = {
   eventId: string
   stationType: (typeof stationTypeEnum.enumValues)[number]
   stationName: string
-  stampOnAddFriend: boolean
   status: (typeof stationStatusEnum.enumValues)[number]
   createdAt: Date
 }
@@ -17,7 +16,6 @@ export type CreateStationData = {
   eventId: string
   stationType: (typeof stationTypeEnum.enumValues)[number]
   stationName: string
-  stampOnAddFriend: boolean
 }
 
 export type UpdateStationData = Partial<Omit<CreateStationData, 'eventId'>>

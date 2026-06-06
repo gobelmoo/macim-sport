@@ -48,7 +48,6 @@ const updateEventSchema = z.object({
 const stationSchema = z.object({
   stationType: z.enum(['air_recovery', 'ice_bath', 'other']),
   stationName: z.string().min(1, 'กรุณาระบุชื่อ Station'),
-  stampOnAddFriend: z.boolean(),
 })
 
 async function assertOwnerOrManager() {
@@ -113,7 +112,6 @@ export async function createStationAction(
   const raw = {
     stationType: formData.get('stationType'),
     stationName: formData.get('stationName'),
-    stampOnAddFriend: formData.get('stampOnAddFriend') === 'on',
   }
 
   const parsed = stationSchema.safeParse(raw)
@@ -137,7 +135,6 @@ export async function updateStationAction(
   const raw = {
     stationType: formData.get('stationType'),
     stationName: formData.get('stationName'),
-    stampOnAddFriend: formData.get('stampOnAddFriend') === 'on',
   }
 
   const parsed = stationSchema.safeParse(raw)
