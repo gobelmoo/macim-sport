@@ -9,6 +9,7 @@ import * as sponsors from './schema/sponsors'
 import * as stamps from './schema/stamps'
 import * as stations from './schema/stations'
 import * as users from './schema/users'
+import * as line from './schema/line'
 
 const url = process.env.DATABASE_URL
 if (!url) {
@@ -30,6 +31,7 @@ export const db = drizzle(sql, {
     ...checkins,
     ...stamps,
     ...postMvp,
+    ...line,
   },
 })
 
