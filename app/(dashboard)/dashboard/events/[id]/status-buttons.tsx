@@ -25,10 +25,10 @@ import type { eventStatusEnum } from '@/db/schema/events'
 type EventStatus = (typeof eventStatusEnum.enumValues)[number]
 
 const STATUS_LABEL: Record<EventStatus, string> = {
-  draft: 'แบบร่าง',
+  draft: 'ร่าง',
   published: 'เผยแพร่',
-  active: 'กำลังจัดงาน',
-  closed: 'ปิดแล้ว',
+  active: 'เปิดลงทะเบียน',
+  closed: 'ปิด',
   archived: 'เก็บถาวร',
 }
 
