@@ -5,7 +5,7 @@ import { handlePostback, handleText, startFlow } from '@/lib/line-state'
 interface LineEvent {
   type: string
   replyToken?: string
-  source: { userId: string }
+  source: { userId?: string }
   message?: { type: string; text: string }
   postback?: { data: string }
 }
@@ -23,11 +23,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  const payload = JSON.parse(body) as LineWebhookBody
+  let payload: LineWebhookBody
+  try {
+    payload = JSON.parse(body) as LineWebhookBody
+  } catch {
+    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
+  }
 
-  await Promise.allSettled(
+  if (!Array.isArray(payload.events)) {
+    return NextResponse.json({ ok: true })
+  }
+
+  const results = await Promise.allSettled(
     payload.events.map(async (event) => {
       const lineUserId = event.source.userId
+      if (!lineUserId) return
+
       const replyToken = event.replyToken ?? ''
 
       if (event.type === 'follow') {
@@ -41,12 +52,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
 
       if (event.type === 'postback' && event.postback?.data) {
-        const data = JSON.parse(event.postback.data) as Record<string, string>
+        let data: Record<string, string>
+        try {
+          data = JSON.parse(event.postback.data) as Record<string, string>
+        } catch {
+          return
+        }
         await handlePostback(lineUserId, data, replyToken)
         return
       }
     }),
   )
+
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.error('[webhook] event handler failed', r.reason)
+  })
 
   return NextResponse.json({ ok: true })
 }
