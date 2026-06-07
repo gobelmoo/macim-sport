@@ -134,7 +134,7 @@ function registeredBubble(event: { eventId: string; eventName: string; eventLogo
           action: {
             type: 'uri',
             label: `BIB ${event.bibNumber}`,
-            uri: `${appBase}/event/${encodedId}`,
+            uri: `${liffBase}?eventId=${encodedId}&bib=${encodeURIComponent(event.bibNumber)}`,
           },
         },
         {
@@ -142,8 +142,8 @@ function registeredBubble(event: { eventId: string; eventName: string; eventLogo
           style: 'secondary',
           action: {
             type: 'uri',
-            label: 'จัดการข้อมูล',
-            uri: `${liffBase}?eventId=${encodedId}&bib=${encodeURIComponent(event.bibNumber)}`,
+            label: 'ดูรายละเอียด',
+            uri: `${appBase}/event/${encodedId}`,
           },
         },
       ],
