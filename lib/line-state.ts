@@ -64,11 +64,14 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
   await replyMessage(replyToken, [welcomeNewMessage(allActive, LIFF_BASE, APP_BASE)])
 }
 
+const TRIGGER_KEYWORDS = new Set(['event', 'promotion'])
+
 export async function handleText(
   lineUserId: string,
-  _text: string,
+  text: string,
   replyToken: string,
 ): Promise<void> {
+  if (!TRIGGER_KEYWORDS.has(text.toLowerCase())) return
   await startFlow(lineUserId, replyToken)
 }
 

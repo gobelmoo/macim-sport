@@ -254,12 +254,16 @@ export async function updateRegistrationBib(
 export async function getRegisteredActiveEventsWithBib(athleteId: string): Promise<{
   eventId: string
   eventName: string
+  startDate: string
+  eventLogoUrl: string | null
   bibNumber: string
 }[]> {
   return db
     .select({
       eventId: events.eventId,
       eventName: events.eventName,
+      startDate: events.startDate,
+      eventLogoUrl: events.eventLogoUrl,
       bibNumber: athleteEventRegistrations.bibNumber,
     })
     .from(athleteEventRegistrations)

@@ -102,16 +102,16 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function registeredBubble(event: { eventId: string; eventName: string; bibNumber: string }, liffBase: string, appBase: string): any {
+function registeredBubble(event: { eventId: string; eventName: string; eventLogoUrl: string | null; bibNumber: string }, liffBase: string, appBase: string): any {
   const encodedId = encodeURIComponent(event.eventId)
-  return {
+  const bubble: any = {
     type: 'bubble',
     header: {
       type: 'box',
       layout: 'vertical',
       backgroundColor: '#06C755',
       paddingAll: 'md',
-      contents: [{ type: 'text', text: '✅ คุณได้รับสิทธิ์แล้ว', color: '#ffffff', weight: 'bold', size: 'sm' }],
+      contents: [{ type: 'text', text: '✅ ได้รับสิทธิ์แล้ว', color: '#ffffff', weight: 'bold', size: 'sm' }],
     },
     body: {
       type: 'box',
@@ -119,7 +119,7 @@ function registeredBubble(event: { eventId: string; eventName: string; bibNumber
       spacing: 'sm',
       contents: [
         { type: 'text', text: event.eventName, weight: 'bold', wrap: true },
-        { type: 'text', text: `BIB: ${event.bibNumber}`, size: 'sm', color: '#555555' },
+        { type: 'text', text: 'คุณได้รับสิทธิ์แล้ว พบกันที่บูธ MACIM-SPORT', wrap: true, size: 'sm', color: '#555555', margin: 'sm' },
       ],
     },
     footer: {
@@ -129,10 +129,11 @@ function registeredBubble(event: { eventId: string; eventName: string; bibNumber
       contents: [
         {
           type: 'button',
-          style: 'secondary',
+          style: 'primary',
+          color: '#06C755',
           action: {
             type: 'uri',
-            label: 'รับสิทธิ์แล้ว ✓',
+            label: `BIB ${event.bibNumber}`,
             uri: `${appBase}/event/${encodedId}`,
           },
         },
@@ -148,6 +149,16 @@ function registeredBubble(event: { eventId: string; eventName: string; bibNumber
       ],
     },
   }
+  if (event.eventLogoUrl) {
+    bubble.hero = {
+      type: 'image',
+      url: event.eventLogoUrl,
+      size: 'full',
+      aspectRatio: '20:13',
+      aspectMode: 'cover',
+    }
+  }
+  return bubble
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -195,15 +206,17 @@ export function errorMessage(type: ErrorType): LineMessage {
 
 export function athleteSummaryFlex(
   firstName: string,
-  registered: { eventId: string; eventName: string; bibNumber: string }[],
+  registered: { eventId: string; eventName: string; startDate: string; eventLogoUrl: string | null; bibNumber: string }[],
   available: ActiveEvent[],
   liffBase: string,
   appBase: string,
 ): LineMessage {
-  const bubbles = [
-    ...available.map((e) => availableBubble(e, liffBase, appBase)),
-    ...registered.map((e) => registeredBubble(e, liffBase, appBase)),
-  ].slice(0, 10)
+  const allItems = [
+    ...available.map((e) => ({ startDate: e.startDate, bubble: availableBubble(e, liffBase, appBase) })),
+    ...registered.map((e) => ({ startDate: e.startDate, bubble: registeredBubble(e, liffBase, appBase) })),
+  ]
+  allItems.sort((a, b) => a.startDate.localeCompare(b.startDate))
+  const bubbles = allItems.slice(0, 10).map((i) => i.bubble)
 
   return flexCarousel(bubbles, `${firstName} — ${CTA_TEXT}`)
 }
