@@ -20,6 +20,12 @@ export type LineMessage = TextMessage | FlexMessage
 
 const CTA_TEXT = 'ทักแชทหาเรา เพื่อรับสิทธิ์ต่างๆฟรีที่บูธ MACIM-SPORT ในอีเว้นท์ที่คุณเข้าร่วม'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function heroBlock(url: string | null): any {
+  if (!url) return undefined
+  return { type: 'image', url, size: 'full', aspectRatio: '20:13', aspectMode: 'cover' }
+}
+
 // ─── Bubble builders ───────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,15 +94,7 @@ function availableBubble(event: ActiveEvent, liffBase: string, appBase: string):
     },
   }
 
-  if (event.eventLogoUrl) {
-    bubble.hero = {
-      type: 'image',
-      url: event.eventLogoUrl,
-      size: 'full',
-      aspectRatio: '20:13',
-      aspectMode: 'cover',
-    }
-  }
+  bubble.hero = heroBlock(event.eventLogoUrl)
 
   return bubble
 }
@@ -149,15 +147,7 @@ function registeredBubble(event: { eventId: string; eventName: string; eventLogo
       ],
     },
   }
-  if (event.eventLogoUrl) {
-    bubble.hero = {
-      type: 'image',
-      url: event.eventLogoUrl,
-      size: 'full',
-      aspectRatio: '20:13',
-      aspectMode: 'cover',
-    }
-  }
+  bubble.hero = heroBlock(event.eventLogoUrl)
   return bubble
 }
 
@@ -211,12 +201,12 @@ export function athleteSummaryFlex(
   liffBase: string,
   appBase: string,
 ): LineMessage {
-  const allItems = [
-    ...available.map((e) => ({ startDate: e.startDate, bubble: availableBubble(e, liffBase, appBase) })),
-    ...registered.map((e) => ({ startDate: e.startDate, bubble: registeredBubble(e, liffBase, appBase) })),
+  const allItems: [string, any][] = [
+    ...available.map((e) => [e.startDate, availableBubble(e, liffBase, appBase)] as [string, any]),
+    ...registered.map((e) => [e.startDate, registeredBubble(e, liffBase, appBase)] as [string, any]),
   ]
-  allItems.sort((a, b) => a.startDate.localeCompare(b.startDate))
-  const bubbles = allItems.slice(0, 10).map((i) => i.bubble)
+  allItems.sort(([a], [b]) => a.localeCompare(b))
+  const bubbles = allItems.slice(0, 10).map(([, bubble]) => bubble)
 
   return flexCarousel(bubbles, `${firstName} — ${CTA_TEXT}`)
 }
