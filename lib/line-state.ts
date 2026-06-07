@@ -12,7 +12,10 @@ import {
 } from '@/lib/line-messages'
 
 const LIFF_BASE = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`
-const APP_BASE = (process.env.AUTH_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+const APP_BASE = (
+  process.env.AUTH_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+).replace(/\/$/, '')
 
 export function isValidBib(bib: string): boolean {
   return /^[A-Za-z0-9\-]{1,10}$/.test(bib)
