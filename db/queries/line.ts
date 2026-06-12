@@ -1,6 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '@/db'
-import { lineSessions, lineStateEnum, athleteConsents } from '@/db/schema/line'
+import { lineSessions, lineStateEnum, athleteConsents, lineSettings } from '@/db/schema/line'
 import { athletes } from '@/db/schema/athletes'
 import { events } from '@/db/schema/events'
 import { athleteEventRegistrations } from '@/db/schema/athlete_event_registrations'
@@ -275,4 +275,65 @@ export async function getRegisteredActiveEventsWithBib(athleteId: string): Promi
       ),
     )
     .orderBy(events.startDate)
+}
+
+// ─── LINE Settings ───────────────────────────────────────────────────────────
+
+export const DEFAULT_FALLBACK_MESSAGE =
+  'ขณะนี้ไม่มีงานที่เปิดรับลงทะเบียน\nกรุณาติดตามประกาศจากผู้จัดงาน'
+
+const LINE_SETTINGS_ID = 'singleton'
+
+export interface LineSettings {
+  id: string
+  fallbackEnabled: boolean
+  fallbackMessage: string
+  updatedAt: Date
+}
+
+export async function getLineSettings(): Promise<LineSettings> {
+  const [row] = await db
+    .select()
+    .from(lineSettings)
+    .where(eq(lineSettings.id, LINE_SETTINGS_ID))
+    .limit(1)
+
+  if (row) return row
+
+  const [created] = await db
+    .insert(lineSettings)
+    .values({ id: LINE_SETTINGS_ID, fallbackMessage: DEFAULT_FALLBACK_MESSAGE })
+    .onConflictDoNothing()
+    .returning()
+
+  if (created) return created
+
+  const [existing] = await db
+    .select()
+    .from(lineSettings)
+    .where(eq(lineSettings.id, LINE_SETTINGS_ID))
+    .limit(1)
+  return existing
+}
+
+export async function updateLineSettings(input: {
+  fallbackEnabled: boolean
+  fallbackMessage: string
+}): Promise<void> {
+  await db
+    .insert(lineSettings)
+    .values({
+      id: LINE_SETTINGS_ID,
+      fallbackEnabled: input.fallbackEnabled,
+      fallbackMessage: input.fallbackMessage,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: lineSettings.id,
+      set: {
+        fallbackEnabled: input.fallbackEnabled,
+        fallbackMessage: input.fallbackMessage,
+        updatedAt: new Date(),
+      },
+    })
 }
