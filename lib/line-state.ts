@@ -2,11 +2,12 @@ import {
   getActiveEvents,
   getAthleteByLineUserId,
   getRegisteredActiveEventsWithBib,
+  getLineSettings,
 } from '@/db/queries/line'
 import { replyMessage } from '@/lib/line-client'
 import {
   athleteSummaryFlex,
-  errorMessage,
+  textMessage,
   welcomeBackMessage,
   welcomeNewMessage,
 } from '@/lib/line-messages'
@@ -28,6 +29,16 @@ export function resolveFallbackText(settings: {
   if (!settings.fallbackEnabled) return null
   const text = settings.fallbackMessage.trim()
   return text.length > 0 ? text : null
+}
+
+async function replyFallback(replyToken: string): Promise<void> {
+  try {
+    const settings = await getLineSettings()
+    const text = resolveFallbackText(settings)
+    if (text) await replyMessage(replyToken, [textMessage(text)])
+  } catch (err) {
+    console.error('[replyFallback] failed', err)
+  }
 }
 
 export async function startFlow(lineUserId: string, replyToken: string): Promise<void> {
@@ -60,7 +71,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
     }
 
     if (available.length === 0) {
-      await replyMessage(replyToken, [errorMessage('no_events')])
+      await replyFallback(replyToken)
       return
     }
 
@@ -69,7 +80,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
   }
 
   if (allActive.length === 0) {
-    await replyMessage(replyToken, [errorMessage('no_events')])
+    await replyFallback(replyToken)
     return
   }
 
@@ -83,7 +94,10 @@ export async function handleText(
   text: string,
   replyToken: string,
 ): Promise<void> {
-  if (!TRIGGER_KEYWORDS.has(text.toLowerCase())) return
+  if (!TRIGGER_KEYWORDS.has(text.toLowerCase())) {
+    await replyFallback(replyToken)
+    return
+  }
   await startFlow(lineUserId, replyToken)
 }
 
