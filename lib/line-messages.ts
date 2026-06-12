@@ -192,6 +192,10 @@ export function errorMessage(type: ErrorType): LineMessage {
   return { type: 'text', text: ERROR_TEXTS[type] }
 }
 
+export function textMessage(text: string): LineMessage {
+  return { type: 'text', text }
+}
+
 // ─── Athlete Summary Flex ──────────────────────────────────────────────────
 
 export function athleteSummaryFlex(
