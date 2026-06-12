@@ -313,6 +313,9 @@ export async function getLineSettings(): Promise<LineSettings> {
     .from(lineSettings)
     .where(eq(lineSettings.id, LINE_SETTINGS_ID))
     .limit(1)
+  if (!existing) {
+    throw new Error('unreachable: line_settings row missing after conflict')
+  }
   return existing
 }
 
