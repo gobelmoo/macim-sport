@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isValidBib } from '@/lib/line-state'
+import { isValidBib, resolveFallbackText } from '@/lib/line-state'
 
 describe('isValidBib', () => {
   it.each([
@@ -15,5 +15,20 @@ describe('isValidBib', () => {
     ['ABC-123-XYZ', false],
   ])('isValidBib(%s) → %s', (bib, expected) => {
     expect(isValidBib(bib)).toBe(expected)
+  })
+})
+
+describe('resolveFallbackText', () => {
+  it('คืนข้อความเมื่อเปิดและมีข้อความ', () => {
+    expect(resolveFallbackText({ fallbackEnabled: true, fallbackMessage: 'hi' })).toBe('hi')
+  })
+  it('คืน null เมื่อปิด', () => {
+    expect(resolveFallbackText({ fallbackEnabled: false, fallbackMessage: 'hi' })).toBeNull()
+  })
+  it('คืน null เมื่อข้อความว่าง/มีแต่ช่องว่าง', () => {
+    expect(resolveFallbackText({ fallbackEnabled: true, fallbackMessage: '   ' })).toBeNull()
+  })
+  it('trim ช่องว่างหัวท้าย', () => {
+    expect(resolveFallbackText({ fallbackEnabled: true, fallbackMessage: ' hi ' })).toBe('hi')
   })
 })

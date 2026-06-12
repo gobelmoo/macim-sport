@@ -21,6 +21,15 @@ export function isValidBib(bib: string): boolean {
   return /^[A-Za-z0-9\-]{1,10}$/.test(bib)
 }
 
+export function resolveFallbackText(settings: {
+  fallbackEnabled: boolean
+  fallbackMessage: string
+}): string | null {
+  if (!settings.fallbackEnabled) return null
+  const text = settings.fallbackMessage.trim()
+  return text.length > 0 ? text : null
+}
+
 export async function startFlow(lineUserId: string, replyToken: string): Promise<void> {
   const [existingAthlete, allActive] = await Promise.all([
     getAthleteByLineUserId(lineUserId),
