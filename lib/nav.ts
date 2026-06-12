@@ -4,6 +4,7 @@ import {
   Home,
   BarChart3,
   Building2,
+  MessageSquare,
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -65,6 +66,12 @@ export const NAV: NavGroup[] = [
         href: '/dashboard/reports',
         icon: BarChart3,
         anyOf: ['report:view', 'report:view_own'],
+      },
+      {
+        title: 'ตั้งค่า LINE',
+        href: '/dashboard/settings',
+        icon: MessageSquare,
+        anyOf: ['user:manage'],
       },
     ],
   },

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   errorMessage,
   successMessage,
+  textMessage,
 } from '@/lib/line-messages'
 
 describe('errorMessage', () => {
@@ -21,5 +22,11 @@ describe('successMessage', () => {
     expect(msg.text).toContain('สมชาย')
     expect(msg.text).toContain('A-1')
     expect(msg.text).toContain('งานวิ่ง')
+  })
+})
+
+describe('textMessage', () => {
+  it('สร้าง text message object', () => {
+    expect(textMessage('สวัสดี')).toEqual({ type: 'text', text: 'สวัสดี' })
   })
 })
