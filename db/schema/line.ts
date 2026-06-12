@@ -31,3 +31,10 @@ export const athleteConsents = pgTable('athlete_consents', {
   marketingAccepted: boolean().notNull().default(false),
   consentedAt: timestamp({ mode: 'date' }).defaultNow().notNull(),
 })
+
+export const lineSettings = pgTable('line_settings', {
+  id: text().primaryKey().default('singleton'),
+  fallbackEnabled: boolean().notNull().default(true),
+  fallbackMessage: text().notNull(),
+  updatedAt: timestamp({ mode: 'date' }).defaultNow().notNull(),
+})
