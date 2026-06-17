@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmActionButton } from '@/app/_components/confirm-action-button'
+import { BibKeypad } from '@/app/_components/bib-keypad'
 import { QueueQrButton } from '../../../_components/queue-qr-button'
 import type { BoardData, EntryView } from '@/db/queries/queue'
 import {
@@ -239,6 +240,7 @@ export function QueueBoard({
             เพิ่มคิว
           </Button>
         </div>
+        <BibKeypad value={addInput} onChange={setAddInput} />
         {addMsg && <p className="text-sm text-green-600">{addMsg}</p>}
         <p className="text-xs text-muted-foreground">
           กรอก BIB ที่ลงทะเบียนแล้ว → ผูกนักกีฬาคนนั้น · กรอกชื่อหรือ BIB

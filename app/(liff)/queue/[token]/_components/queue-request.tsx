@@ -4,12 +4,14 @@ import { useActionState, useEffect, useState } from 'react'
 import liff from '@line/liff'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BibKeypad } from '@/app/_components/bib-keypad'
 import { getQueueContext, requestQueue, type QueueContext } from '../actions'
 
 export function QueueRequest({ token }: { token: string }) {
   const [idToken, setIdToken] = useState<string | null>(null)
   const [ctx, setCtx] = useState<QueueContext | null>(null)
   const [initError, setInitError] = useState<string | null>(null)
+  const [bib, setBib] = useState('')
   const [state, formAction, isPending] = useActionState(requestQueue, null)
 
   useEffect(() => {
@@ -74,9 +76,20 @@ export function QueueRequest({ token }: { token: string }) {
       <h1 className="text-lg font-bold">รับคิว — {ctx.counterName}</h1>
 
       {ctx.mode !== 'ready' && (
-        <div>
+        <div className="space-y-2">
           <label className="text-sm">หมายเลข BIB</label>
-          <Input name="bib" required placeholder="เช่น A123" />
+          <input type="hidden" name="bib" value={bib} />
+          <div className="flex h-14 items-center justify-center rounded-xl border-2 bg-background px-4">
+            {bib ? (
+              <span className="font-mono text-3xl font-bold tracking-wider">
+                {bib}
+                <span className="animate-pulse">|</span>
+              </span>
+            ) : (
+              <span className="text-muted-foreground">แตะแป้นด้านล่างเพื่อกรอก BIB</span>
+            )}
+          </div>
+          <BibKeypad value={bib} onChange={setBib} />
         </div>
       )}
 
@@ -114,7 +127,11 @@ export function QueueRequest({ token }: { token: string }) {
       {state && !state.ok && (
         <p className="text-sm text-destructive">{state.error}</p>
       )}
-      <Button type="submit" className="w-full" disabled={isPending || !idToken}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isPending || !idToken || (ctx.mode !== 'ready' && !bib)}
+      >
         {isPending ? 'กำลังขอคิว...' : 'ขอเลขคิว'}
       </Button>
     </form>

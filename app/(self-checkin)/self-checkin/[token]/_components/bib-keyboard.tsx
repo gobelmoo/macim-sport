@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { BibKeypad } from '@/app/_components/bib-keypad'
 
 interface BibKeyboardProps {
   value: string
@@ -9,22 +10,7 @@ interface BibKeyboardProps {
   onBack: () => void
 }
 
-const DIGIT_ROWS = [
-  ['1', '2', '3', '4', '5', '6'],
-  ['7', '8', '9', '0', '-', '⌫'],
-]
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
-
 export function BibKeyboard({ value, onChange, onConfirm, onBack }: BibKeyboardProps) {
-  function press(char: string) {
-    if (value.length >= 12) return
-    onChange(value + char)
-  }
-
-  function backspace() {
-    onChange(value.slice(0, -1))
-  }
-
   return (
     <div className="flex flex-col gap-3">
       {/* Display bar */}
@@ -38,37 +24,7 @@ export function BibKeyboard({ value, onChange, onConfirm, onBack }: BibKeyboardP
         )}
       </div>
 
-      {/* Digit + hyphen + backspace rows */}
-      {DIGIT_ROWS.map((row, ri) => (
-        <div key={ri} className="grid grid-cols-6 gap-2">
-          {row.map((key) => (
-            <Button
-              key={key}
-              type="button"
-              variant="outline"
-              onClick={key === '⌫' ? backspace : () => press(key)}
-              className="h-14 rounded-xl text-2xl font-semibold active:bg-muted select-none"
-            >
-              {key}
-            </Button>
-          ))}
-        </div>
-      ))}
-
-      {/* Letter pad A–Z */}
-      <div className="flex flex-wrap justify-center gap-2">
-        {LETTERS.map((l) => (
-          <Button
-            key={l}
-            type="button"
-            variant="outline"
-            onClick={() => press(l)}
-            className="h-12 w-12 rounded-xl p-0 text-lg font-semibold active:bg-muted select-none"
-          >
-            {l}
-          </Button>
-        ))}
-      </div>
+      <BibKeypad value={value} onChange={onChange} />
 
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3 pt-1">
