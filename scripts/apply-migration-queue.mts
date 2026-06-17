@@ -4,7 +4,7 @@ import { readFileSync } from 'fs'
 const url = process.env.DATABASE_URL!
 const sql = neon(url)
 
-const migrationSql = readFileSync('./db/migrations/0008_mushy_leader.sql', 'utf-8')
+const migrationSql = readFileSync('./db/migrations/0009_thankful_shotgun.sql', 'utf-8')
 
 const statements = migrationSql
   .split('--> statement-breakpoint')

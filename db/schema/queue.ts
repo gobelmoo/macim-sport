@@ -14,6 +14,7 @@ import { createdAtColumn, idColumn, statusEnum } from './_common'
 import { athletes } from './athletes'
 import { athleteEventRegistrations } from './athlete_event_registrations'
 import { events } from './events'
+import { stations } from './stations'
 
 export const queueEntryStatusEnum = pgEnum('queue_entry_status', [
   'waiting',
@@ -23,24 +24,32 @@ export const queueEntryStatusEnum = pgEnum('queue_entry_status', [
   'cancelled',
 ])
 
-export const queueCounters = pgTable('queue_counters', {
-  counterId: idColumn(),
-  eventId: text()
-    .notNull()
-    .references(() => events.eventId, { onDelete: 'cascade' }),
-  counterName: text().notNull(),
-  isOpen: boolean().default(false).notNull(),
-  // เปลี่ยนทุกครั้งที่ reset → ทำให้ entry/ลิงก์สถานะของ session เก่าใช้ไม่ได้
-  sessionId: text()
-    .notNull()
-    .$defaultFn(() => crypto.randomUUID()),
-  // ตัวนับเลขคิวล่าสุด — เพิ่มแบบ atomic ตอน enqueue
-  lastDisplayNumber: integer().default(0).notNull(),
-  // rolling average ของเวลา serve (วินาที); null = ยังไม่มีประวัติ
-  avgServiceSeconds: integer(),
-  status: statusEnum().default('active').notNull(),
-  createdAt: createdAtColumn(),
-})
+export const queueCounters = pgTable(
+  'queue_counters',
+  {
+    counterId: idColumn(),
+    eventId: text()
+      .notNull()
+      .references(() => events.eventId, { onDelete: 'cascade' }),
+    // 1 station = 1 counter — ผูก counter เข้ากับ station เสมอ
+    stationId: text()
+      .notNull()
+      .references(() => stations.stationId, { onDelete: 'cascade' }),
+    counterName: text().notNull(),
+    isOpen: boolean().default(false).notNull(),
+    // เปลี่ยนทุกครั้งที่ reset → ทำให้ entry/ลิงก์สถานะของ session เก่าใช้ไม่ได้
+    sessionId: text()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    // ตัวนับเลขคิวล่าสุด — เพิ่มแบบ atomic ตอน enqueue
+    lastDisplayNumber: integer().default(0).notNull(),
+    // rolling average ของเวลา serve (วินาที); null = ยังไม่มีประวัติ
+    avgServiceSeconds: integer(),
+    status: statusEnum().default('active').notNull(),
+    createdAt: createdAtColumn(),
+  },
+  (t) => [uniqueIndex('queue_counters_station_idx').on(t.stationId)],
+)
 
 export const queueEntries = pgTable(
   'queue_entries',

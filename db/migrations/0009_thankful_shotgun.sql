@@ -1,0 +1,3 @@
+ALTER TABLE "queue_counters" ADD COLUMN "stationId" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "queue_counters" ADD CONSTRAINT "queue_counters_stationId_stations_stationId_fk" FOREIGN KEY ("stationId") REFERENCES "public"."stations"("stationId") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "queue_counters_station_idx" ON "queue_counters" USING btree ("stationId");
