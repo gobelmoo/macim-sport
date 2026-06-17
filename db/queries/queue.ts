@@ -2,6 +2,7 @@ import { and, asc, eq, inArray, lt, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { athletes } from '@/db/schema/athletes'
 import { queueCounters, queueEntries } from '@/db/schema/queue'
+import { stations } from '@/db/schema/stations'
 import { nextRollingAverage, requeueSortSeq, estimateWaitSeconds } from '@/lib/queue-core'
 
 const ACTIVE_STATUSES = ['waiting', 'serving', 'skipped'] as const
@@ -9,6 +10,7 @@ const ACTIVE_STATUSES = ['waiting', 'serving', 'skipped'] as const
 export type CounterRow = {
   counterId: string
   eventId: string
+  stationId: string
   counterName: string
   isOpen: boolean
   sessionId: string
@@ -46,35 +48,49 @@ export type QueueStatus = {
 
 // ─── Counters ────────────────────────────────────────────────────────────────
 
-export async function createCounter(input: {
-  eventId: string
-  counterName: string
-}): Promise<{ counterId: string }> {
-  const [row] = await db
-    .insert(queueCounters)
-    .values({ eventId: input.eventId, counterName: input.counterName })
-    .returning({ counterId: queueCounters.counterId })
-  return row
-}
-
-export async function listCountersByEvent(
-  eventId: string,
-): Promise<CounterRow[]> {
-  return db
+/**
+ * คืน counterId ของ station (1 station = 1 counter). ถ้ายังไม่มี counter
+ * → สร้างใหม่ (ชื่อ = ชื่อ station). คืน null ถ้าหา station ไม่เจอ.
+ */
+export async function getOrCreateCounterForStation(
+  stationId: string,
+): Promise<string | null> {
+  const [station] = await db
     .select({
-      counterId: queueCounters.counterId,
-      eventId: queueCounters.eventId,
-      counterName: queueCounters.counterName,
-      isOpen: queueCounters.isOpen,
-      sessionId: queueCounters.sessionId,
-      lastDisplayNumber: queueCounters.lastDisplayNumber,
-      avgServiceSeconds: queueCounters.avgServiceSeconds,
+      stationId: stations.stationId,
+      stationName: stations.stationName,
+      eventId: stations.eventId,
     })
+    .from(stations)
+    .where(eq(stations.stationId, stationId))
+    .limit(1)
+  if (!station) return null
+
+  const [existing] = await db
+    .select({ counterId: queueCounters.counterId })
     .from(queueCounters)
-    .where(
-      and(eq(queueCounters.eventId, eventId), eq(queueCounters.status, 'active')),
-    )
-    .orderBy(asc(queueCounters.createdAt))
+    .where(eq(queueCounters.stationId, stationId))
+    .limit(1)
+  if (existing) return existing.counterId
+
+  const [created] = await db
+    .insert(queueCounters)
+    .values({
+      eventId: station.eventId,
+      stationId,
+      counterName: station.stationName,
+    })
+    .onConflictDoNothing()
+    .returning({ counterId: queueCounters.counterId })
+  if (created) return created.counterId
+
+  // ชน unique index (race) → re-select
+  const [row] = await db
+    .select({ counterId: queueCounters.counterId })
+    .from(queueCounters)
+    .where(eq(queueCounters.stationId, stationId))
+    .limit(1)
+  return row?.counterId ?? null
 }
 
 export async function getCounter(counterId: string): Promise<CounterRow | null> {
@@ -82,6 +98,7 @@ export async function getCounter(counterId: string): Promise<CounterRow | null> 
     .select({
       counterId: queueCounters.counterId,
       eventId: queueCounters.eventId,
+      stationId: queueCounters.stationId,
       counterName: queueCounters.counterName,
       isOpen: queueCounters.isOpen,
       sessionId: queueCounters.sessionId,

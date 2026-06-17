@@ -19,6 +19,7 @@ import { signStationToken } from '@/lib/station-token'
 import { createStationAction, updateStationAction } from '../actions'
 import { StationForm } from './station-form'
 import { ToggleStationButton } from './toggle-station-button'
+import { ManageQueueButton } from './manage-queue-button'
 import { DeleteStationButton } from './delete-station-button'
 import { EditStationDialog } from './edit-station-dialog'
 import { StationQrButton } from './_components/station-qr-button'
@@ -155,6 +156,10 @@ export default async function StationsPage({ params }: Props) {
                     {canManage && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <ManageQueueButton
+                            stationId={station.stationId}
+                            eventId={id}
+                          />
                           <ToggleStationButton
                             stationId={station.stationId}
                             eventId={id}

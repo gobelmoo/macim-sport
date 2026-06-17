@@ -25,6 +25,7 @@ import { DeleteEventButton } from './delete-event-button'
 import { CopyLiffLinkButton } from './_components/copy-liff-link-button'
 import { AddStationDialog } from './stations/add-station-dialog'
 import { ToggleStationButton } from './stations/toggle-station-button'
+import { ManageQueueButton } from './stations/manage-queue-button'
 import { DeleteStationButton } from './stations/delete-station-button'
 import { EditStationDialog } from './stations/edit-station-dialog'
 import { StationQrButton } from './stations/_components/station-qr-button'
@@ -138,12 +139,11 @@ export default async function EventDetailPage({ params }: Props) {
 
   const stationsContent = (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/dashboard/events/${id}/queue`}>จัดการคิว</Link>
-        </Button>
-        {canFullEdit && <AddStationDialog action={boundCreateStation} />}
-      </div>
+      {canFullEdit && (
+        <div className="flex justify-end">
+          <AddStationDialog action={boundCreateStation} />
+        </div>
+      )}
       {stationList.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           ยังไม่มี Station
@@ -185,6 +185,7 @@ export default async function EventDetailPage({ params }: Props) {
                     {canEdit && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <ManageQueueButton stationId={station.stationId} eventId={id} />
                           <ToggleStationButton stationId={station.stationId} eventId={id} currentStatus={station.status} />
                           {canFullEdit && (
                             <>

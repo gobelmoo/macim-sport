@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmActionButton } from '@/app/_components/confirm-action-button'
+import { QueueQrButton } from '../../../_components/queue-qr-button'
 import type { BoardData, EntryView } from '@/db/queries/queue'
 import {
   addByBibAction,
@@ -26,9 +27,11 @@ function entryLabel(e: EntryView): string {
 export function QueueBoard({
   eventId,
   board,
+  liffUrl,
 }: {
   eventId: string
   board: BoardData
+  liffUrl: string
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -60,6 +63,7 @@ export function QueueBoard({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <QueueQrButton counterName={board.counter.counterName} liffUrl={liffUrl} />
           <Button
             variant={board.counter.isOpen ? 'outline' : 'default'}
             disabled={isPending}
