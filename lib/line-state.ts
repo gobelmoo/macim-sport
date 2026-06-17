@@ -35,6 +35,15 @@ export function resolveFallbackText(settings: {
   return text.length > 0 ? text : null
 }
 
+const DEFAULT_NO_EVENTS_TEXT = 'ขณะนี้ยังไม่มีกิจกรรมที่เปิดรับลงทะเบียน\nกรุณาติดตามประกาศจากผู้จัดงาน'
+
+// ข้อความตอบเมื่อ user พิมพ์ keyword ถูก แต่ยังไม่มีงานเปิดรับสมัคร
+// ตอบเสมอ ไม่ผูกกับสวิตช์ fallback (fallbackEnabled)
+export function resolveNoEventsText(settings: { fallbackMessage: string }): string {
+  const text = settings.fallbackMessage.trim()
+  return text.length > 0 ? text : DEFAULT_NO_EVENTS_TEXT
+}
+
 export function resolveSettingsToSave(
   input: {
     autoReplyEnabled: boolean
@@ -58,6 +67,16 @@ async function replyFallback(replyToken: string): Promise<void> {
     if (text) await replyMessage(replyToken, [textMessage(text)])
   } catch (err) {
     console.error('[replyFallback] failed', err)
+  }
+}
+
+// ตอบเมื่อ user พิมพ์ keyword ถูก แต่ไม่มีงานเปิดรับ — ตอบเสมอ ไม่สนสวิตช์ fallback
+async function replyNoEvents(replyToken: string): Promise<void> {
+  try {
+    const settings = await getLineSettings()
+    await replyMessage(replyToken, [textMessage(resolveNoEventsText(settings))])
+  } catch (err) {
+    console.error('[replyNoEvents] failed', err)
   }
 }
 
@@ -91,7 +110,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
     }
 
     if (available.length === 0) {
-      await replyFallback(replyToken)
+      await replyNoEvents(replyToken)
       return
     }
 
@@ -100,7 +119,7 @@ export async function startFlow(lineUserId: string, replyToken: string): Promise
   }
 
   if (allActive.length === 0) {
-    await replyFallback(replyToken)
+    await replyNoEvents(replyToken)
     return
   }
 

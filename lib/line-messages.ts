@@ -214,3 +214,72 @@ export function athleteSummaryFlex(
 
   return flexCarousel(bubbles, `${firstName} — ${CTA_TEXT}`)
 }
+
+// ─── Queue Ticket Flex ───────────────────────────────────────────────────────
+
+export function queueTicketMessage(input: {
+  counterName: string
+  displayNumber: number
+  statusUrl: string
+}): LineMessage {
+  return {
+    type: 'flex',
+    altText: `คิวของคุณคือหมายเลข ${input.displayNumber} (${input.counterName})`,
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#1D86E8',
+        paddingAll: 'md',
+        contents: [
+          {
+            type: 'text',
+            text: '🎫 รับคิวสำเร็จ',
+            color: '#ffffff',
+            weight: 'bold',
+            size: 'sm',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          { type: 'text', text: input.counterName, size: 'sm', color: '#555555' },
+          {
+            type: 'text',
+            text: String(input.displayNumber),
+            weight: 'bold',
+            size: '5xl',
+            align: 'center',
+            color: '#1D86E8',
+          },
+          {
+            type: 'text',
+            text: 'หมายเลขคิวของคุณ',
+            size: 'xs',
+            color: '#888888',
+            align: 'center',
+          },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'button',
+            style: 'primary',
+            action: {
+              type: 'uri',
+              label: 'ดูสถานะคิว / เวลารอ',
+              uri: input.statusUrl,
+            },
+          },
+        ],
+      },
+    },
+  }
+}

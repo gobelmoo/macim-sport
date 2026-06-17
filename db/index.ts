@@ -11,6 +11,7 @@ import * as stamps from './schema/stamps'
 import * as stations from './schema/stations'
 import * as users from './schema/users'
 import * as line from './schema/line'
+import * as queue from './schema/queue'
 
 const url = process.env.DATABASE_URL
 if (!url) {
@@ -34,6 +35,7 @@ export const db = drizzle(sql, {
     ...stamps,
     ...postMvp,
     ...line,
+    ...queue,
   },
 })
 

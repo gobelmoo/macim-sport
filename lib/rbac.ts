@@ -35,6 +35,9 @@ export const PERMISSIONS = {
   REPORT_VIEW_OWN: 'report:view_own',
   // Check-in
   CHECKIN_CREATE: 'checkin:create',
+  // Queue
+  QUEUE_MANAGE: 'queue:manage',
+  QUEUE_OPERATE: 'queue:operate',
 } as const
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]
@@ -52,6 +55,8 @@ const MACIM_MANAGER_PERMS: Permission[] = [
   PERMISSIONS.ATHLETE_VIEW,
   PERMISSIONS.REPORT_VIEW,
   PERMISSIONS.CHECKIN_CREATE,
+  PERMISSIONS.QUEUE_MANAGE,
+  PERMISSIONS.QUEUE_OPERATE,
 ]
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[] | '*'> = {
@@ -64,7 +69,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[] | '*'> = {
     PERMISSIONS.REPORT_VIEW_OWN,
     PERMISSIONS.USER_MANAGE_STAFF,
   ],
-  sponsor_staff: [PERMISSIONS.CHECKIN_CREATE],
+  sponsor_staff: [PERMISSIONS.CHECKIN_CREATE, PERMISSIONS.QUEUE_OPERATE],
 }
 
 export function getPermissionsForRole(role: UserRole): Permission[] {
