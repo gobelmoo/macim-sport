@@ -1,0 +1,1 @@
+ALTER TABLE "line_settings" ADD COLUMN "autoReplyEnabled" boolean DEFAULT true NOT NULL;

@@ -34,6 +34,7 @@ export const athleteConsents = pgTable('athlete_consents', {
 
 export const lineSettings = pgTable('line_settings', {
   id: text().primaryKey().default('singleton'),
+  autoReplyEnabled: boolean().notNull().default(true),
   fallbackEnabled: boolean().notNull().default(true),
   fallbackMessage: text().notNull(),
   updatedAt: timestamp({ mode: 'date' }).defaultNow().notNull(),

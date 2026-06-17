@@ -8,6 +8,7 @@ import { canAccess, PERMISSIONS } from '@/lib/rbac'
 import { updateLineSettings } from '@/db/queries/line'
 
 const settingsSchema = z.object({
+  autoReplyEnabled: z.boolean(),
   fallbackEnabled: z.boolean(),
   fallbackMessage: z
     .string()
@@ -33,6 +34,7 @@ export async function updateLineSettingsAction(
   }
 
   const parsed = settingsSchema.safeParse({
+    autoReplyEnabled: formData.get('autoReplyEnabled') === 'on',
     fallbackEnabled: formData.get('fallbackEnabled') === 'on',
     fallbackMessage: (formData.get('fallbackMessage') ?? '').toString(),
   })
