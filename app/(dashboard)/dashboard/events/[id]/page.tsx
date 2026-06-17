@@ -138,11 +138,12 @@ export default async function EventDetailPage({ params }: Props) {
 
   const stationsContent = (
     <div className="space-y-4">
-      {canFullEdit && (
-        <div className="flex justify-end">
-          <AddStationDialog action={boundCreateStation} />
-        </div>
-      )}
+      <div className="flex justify-end gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/dashboard/events/${id}/queue`}>จัดการคิว</Link>
+        </Button>
+        {canFullEdit && <AddStationDialog action={boundCreateStation} />}
+      </div>
       {stationList.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground">
           ยังไม่มี Station
