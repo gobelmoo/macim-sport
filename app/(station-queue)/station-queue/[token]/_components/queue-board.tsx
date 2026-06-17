@@ -22,11 +22,13 @@ export function QueueBoard({
   token,
   liffUrl,
   shareUrl,
+  displayUrl,
 }: {
   board: BoardData
   token: string
   liffUrl: string
   shareUrl: string
+  displayUrl: string
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -51,6 +53,7 @@ export function QueueBoard({
         isPending={isPending}
         liffUrl={liffUrl}
         shareUrl={shareUrl}
+        displayUrl={displayUrl}
         onToggleOpen={() =>
           run(() => toggleOpenAction(token, !board.counter.isOpen))
         }

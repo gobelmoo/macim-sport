@@ -40,10 +40,12 @@ export function ShareDialog({
   counterName,
   liffUrl,
   shareUrl,
+  displayUrl,
 }: {
   counterName: string
   liffUrl: string
   shareUrl: string
+  displayUrl: string
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -52,16 +54,17 @@ export function ShareDialog({
         QR
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-h-[85vh] max-w-sm overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{counterName}</DialogTitle>
             <DialogDescription>
-              QR สำหรับนักกีฬาและอุปกรณ์ staff
+              QR สำหรับนักกีฬา · อุปกรณ์ staff · จอแสดงคิว
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <QrBlock title="QR นักกีฬา (สแกนเพื่อรับคิว)" url={liffUrl} />
             <QrBlock title="หน้าจอนี้ (เปิดบนอุปกรณ์ staff อื่น)" url={shareUrl} />
+            <QrBlock title="หน้าจอแสดงคิว (ตั้งจอให้นักกีฬาดู)" url={displayUrl} />
           </div>
         </DialogContent>
       </Dialog>
