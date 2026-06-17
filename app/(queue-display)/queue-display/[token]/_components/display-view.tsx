@@ -51,34 +51,28 @@ export function DisplayView({
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 sm:flex-row">
-        <div className="text-center">
-          <p className="text-xl text-muted-foreground lg:text-2xl">กำลังเรียกคิว</p>
-          {data.serving ? (
-            <>
-              <p className="text-[8rem] font-bold leading-none text-primary lg:text-[13rem]">
-                {data.serving.displayNumber}
-              </p>
-              {data.serving.bibNumber && (
-                <p className="text-2xl text-muted-foreground">
-                  BIB {data.serving.bibNumber}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-[6rem] font-bold leading-none text-muted-foreground lg:text-[10rem]">
-              —
+      {/* คิวที่กำลังเรียก — เลข + BIB เป็นจุดโฟกัสกลางจอ */}
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <p className="text-xl text-muted-foreground lg:text-2xl">กำลังเรียกคิว</p>
+        {data.serving ? (
+          <>
+            <p className="text-[8rem] font-bold leading-none text-primary lg:text-[13rem]">
+              {data.serving.displayNumber}
             </p>
-          )}
-        </div>
-        <div className="text-center">
-          <div className="rounded-2xl border bg-card p-4">
-            <QRCodeSVG value={liffUrl} size={160} level="M" />
-          </div>
-          <p className="mt-2 text-lg font-medium">สแกนรับคิว</p>
-        </div>
+            {data.serving.bibNumber && (
+              <p className="mt-3 text-3xl font-medium text-muted-foreground lg:text-4xl">
+                BIB {data.serving.bibNumber}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-[6rem] font-bold leading-none text-muted-foreground lg:text-[10rem]">
+            —
+          </p>
+        )}
       </div>
 
+      {/* คิวถัดไป */}
       <div>
         <p className="mb-3 text-xl font-medium lg:text-2xl">คิวถัดไป</p>
         {data.next.length === 0 ? (
@@ -102,6 +96,14 @@ export function DisplayView({
             ))}
           </div>
         )}
+      </div>
+
+      {/* QR รับคิว — ล่างสุด */}
+      <div className="flex flex-col items-center gap-2 border-t pt-6">
+        <div className="rounded-2xl border bg-card p-4">
+          <QRCodeSVG value={liffUrl} size={160} level="M" />
+        </div>
+        <p className="text-lg font-medium">สแกนรับคิว</p>
       </div>
     </main>
   )
