@@ -5,9 +5,11 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS } from '@/lib/rbac'
-import { updateLineSettings } from '@/db/queries/line'
+import { getLineSettings, updateLineSettings } from '@/db/queries/line'
+import { resolveSettingsToSave } from '@/lib/line-state'
 
 const settingsSchema = z.object({
+  autoReplyEnabled: z.boolean(),
   fallbackEnabled: z.boolean(),
   fallbackMessage: z
     .string()
@@ -33,6 +35,7 @@ export async function updateLineSettingsAction(
   }
 
   const parsed = settingsSchema.safeParse({
+    autoReplyEnabled: formData.get('autoReplyEnabled') === 'on',
     fallbackEnabled: formData.get('fallbackEnabled') === 'on',
     fallbackMessage: (formData.get('fallbackMessage') ?? '').toString(),
   })
@@ -40,7 +43,17 @@ export async function updateLineSettingsAction(
     return { errors: parsed.error.flatten().fieldErrors }
   }
 
-  await updateLineSettings(parsed.data)
+  const current = await getLineSettings()
+  const settingsToSave = resolveSettingsToSave(
+    {
+      autoReplyEnabled: parsed.data.autoReplyEnabled,
+      fallbackPresent: formData.has('fallbackMessage'),
+      fallbackEnabled: parsed.data.fallbackEnabled,
+      fallbackMessage: parsed.data.fallbackMessage,
+    },
+    current,
+  )
+  await updateLineSettings(settingsToSave)
   revalidatePath('/dashboard/settings')
   return { success: true, message: 'บันทึกการตั้งค่าแล้ว' }
 }

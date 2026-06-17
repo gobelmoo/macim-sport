@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isValidBib, resolveFallbackText } from '@/lib/line-state'
+import { isValidBib, resolveFallbackText, resolveSettingsToSave, shouldAutoReply } from '@/lib/line-state'
 
 describe('isValidBib', () => {
   it.each([
@@ -30,5 +30,78 @@ describe('resolveFallbackText', () => {
   })
   it('trim ช่องว่างหัวท้าย', () => {
     expect(resolveFallbackText({ fallbackEnabled: true, fallbackMessage: ' hi ' })).toBe('hi')
+  })
+})
+
+describe('shouldAutoReply', () => {
+  it('คืน true เมื่อเปิด', () => {
+    expect(shouldAutoReply({ autoReplyEnabled: true })).toBe(true)
+  })
+  it('คืน false เมื่อปิด', () => {
+    expect(shouldAutoReply({ autoReplyEnabled: false })).toBe(false)
+  })
+})
+
+describe('resolveSettingsToSave', () => {
+  const current = { fallbackEnabled: true, fallbackMessage: 'saved message' }
+
+  it('ใช้ค่า input เมื่อ fallbackPresent=true', () => {
+    const result = resolveSettingsToSave(
+      {
+        autoReplyEnabled: true,
+        fallbackPresent: true,
+        fallbackEnabled: false,
+        fallbackMessage: 'new message',
+      },
+      current,
+    )
+    expect(result).toEqual({
+      autoReplyEnabled: true,
+      fallbackEnabled: false,
+      fallbackMessage: 'new message',
+    })
+  })
+
+  it('รักษาค่าปัจจุบันเมื่อ fallbackPresent=false', () => {
+    const result = resolveSettingsToSave(
+      {
+        autoReplyEnabled: false,
+        fallbackPresent: false,
+        fallbackEnabled: false,
+        fallbackMessage: '',
+      },
+      current,
+    )
+    expect(result).toEqual({
+      autoReplyEnabled: false,
+      fallbackEnabled: true,
+      fallbackMessage: 'saved message',
+    })
+  })
+
+  it('autoReplyEnabled ส่งผ่านเสมอแม้ fallbackPresent=true', () => {
+    const result = resolveSettingsToSave(
+      {
+        autoReplyEnabled: false,
+        fallbackPresent: true,
+        fallbackEnabled: true,
+        fallbackMessage: 'hello',
+      },
+      current,
+    )
+    expect(result.autoReplyEnabled).toBe(false)
+  })
+
+  it('autoReplyEnabled ส่งผ่านเสมอแม้ fallbackPresent=false', () => {
+    const result = resolveSettingsToSave(
+      {
+        autoReplyEnabled: true,
+        fallbackPresent: false,
+        fallbackEnabled: false,
+        fallbackMessage: '',
+      },
+      current,
+    )
+    expect(result.autoReplyEnabled).toBe(true)
   })
 })

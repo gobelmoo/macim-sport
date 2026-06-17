@@ -22,6 +22,10 @@ export function isValidBib(bib: string): boolean {
   return /^[A-Za-z0-9\-]{1,10}$/.test(bib)
 }
 
+export function shouldAutoReply(settings: { autoReplyEnabled: boolean }): boolean {
+  return settings.autoReplyEnabled
+}
+
 export function resolveFallbackText(settings: {
   fallbackEnabled: boolean
   fallbackMessage: string
@@ -29,6 +33,22 @@ export function resolveFallbackText(settings: {
   if (!settings.fallbackEnabled) return null
   const text = settings.fallbackMessage.trim()
   return text.length > 0 ? text : null
+}
+
+export function resolveSettingsToSave(
+  input: {
+    autoReplyEnabled: boolean
+    fallbackPresent: boolean
+    fallbackEnabled: boolean
+    fallbackMessage: string
+  },
+  current: { fallbackEnabled: boolean; fallbackMessage: string },
+): { autoReplyEnabled: boolean; fallbackEnabled: boolean; fallbackMessage: string } {
+  return {
+    autoReplyEnabled: input.autoReplyEnabled,
+    fallbackEnabled: input.fallbackPresent ? input.fallbackEnabled : current.fallbackEnabled,
+    fallbackMessage: input.fallbackPresent ? input.fallbackMessage : current.fallbackMessage,
+  }
 }
 
 async function replyFallback(replyToken: string): Promise<void> {

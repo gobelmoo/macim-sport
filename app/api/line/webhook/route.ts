@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyLineSignature } from '@/lib/line-client'
-import { handlePostback, handleText, startFlow } from '@/lib/line-state'
+import { handlePostback, handleText, startFlow, shouldAutoReply } from '@/lib/line-state'
+import { getLineSettings } from '@/db/queries/line'
 
 interface LineEvent {
   type: string
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (!Array.isArray(payload.events)) {
+    return NextResponse.json({ ok: true })
+  }
+
+  const settings = await getLineSettings()
+  if (!shouldAutoReply(settings)) {
     return NextResponse.json({ ok: true })
   }
 

@@ -286,6 +286,7 @@ const LINE_SETTINGS_ID = 'singleton'
 
 export interface LineSettings {
   id: string
+  autoReplyEnabled: boolean
   fallbackEnabled: boolean
   fallbackMessage: string
   updatedAt: Date
@@ -320,6 +321,7 @@ export async function getLineSettings(): Promise<LineSettings> {
 }
 
 export async function updateLineSettings(input: {
+  autoReplyEnabled: boolean
   fallbackEnabled: boolean
   fallbackMessage: string
 }): Promise<void> {
@@ -327,6 +329,7 @@ export async function updateLineSettings(input: {
     .insert(lineSettings)
     .values({
       id: LINE_SETTINGS_ID,
+      autoReplyEnabled: input.autoReplyEnabled,
       fallbackEnabled: input.fallbackEnabled,
       fallbackMessage: input.fallbackMessage,
       updatedAt: new Date(),
@@ -334,6 +337,7 @@ export async function updateLineSettings(input: {
     .onConflictDoUpdate({
       target: lineSettings.id,
       set: {
+        autoReplyEnabled: input.autoReplyEnabled,
         fallbackEnabled: input.fallbackEnabled,
         fallbackMessage: input.fallbackMessage,
         updatedAt: new Date(),
