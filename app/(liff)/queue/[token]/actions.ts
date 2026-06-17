@@ -35,7 +35,7 @@ export async function getQueueContext(
   token: string,
   liffIdToken: string,
 ): Promise<QueueContext> {
-  const payload = await verifyQueueToken(token)
+  const payload = await verifyQueueToken(token, 'request')
   if (!payload) return { ok: false, reason: 'invalid' }
   const counter = await getCounter(payload.counterId)
   if (!counter || counter.eventId !== payload.eventId) {
@@ -76,7 +76,7 @@ export async function requestQueue(
   const token = formData.get('token') as string
   const liffIdToken = formData.get('liffIdToken') as string
 
-  const payload = await verifyQueueToken(token)
+  const payload = await verifyQueueToken(token, 'request')
   if (!payload) return { ok: false, error: 'ลิงก์ไม่ถูกต้อง' }
   const counter = await getCounter(payload.counterId)
   if (!counter || counter.eventId !== payload.eventId) {
