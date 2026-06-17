@@ -33,6 +33,7 @@ export type BoardData = {
   counter: CounterRow
   serving: EntryView | null
   upcoming: EntryView[]
+  waiting: EntryView[]
   skipped: EntryView[]
   waitingCount: number
 }
@@ -288,6 +289,7 @@ export async function getBoard(counterId: string): Promise<BoardData | null> {
     counter,
     serving: servingList[0] ?? null,
     upcoming: waitingAll.slice(0, 3),
+    waiting: waitingAll,
     skipped,
     waitingCount: waitingAll.length,
   }
@@ -467,5 +469,56 @@ export async function getQueueStatus(
     peopleAhead,
     etaSeconds: estimateWaitSeconds(peopleAhead, entry.avgServiceSeconds),
     sessionValid,
+  }
+}
+
+// ─── Display (public, read-only, เลข+bib เท่านั้น) ────────────────────────────
+
+export type QueueDisplay = {
+  counterName: string
+  isOpen: boolean
+  serving: { displayNumber: number; bibNumber: string | null } | null
+  next: { displayNumber: number; bibNumber: string | null }[]
+}
+
+export async function getQueueDisplay(
+  counterId: string,
+): Promise<QueueDisplay | null> {
+  const counter = await getCounter(counterId)
+  if (!counter) return null
+  const cols = {
+    displayNumber: queueEntries.displayNumber,
+    bibNumber: queueEntries.bibNumber,
+  }
+  const [servingRows, nextRows] = await Promise.all([
+    db
+      .select(cols)
+      .from(queueEntries)
+      .where(
+        and(
+          eq(queueEntries.counterId, counterId),
+          eq(queueEntries.sessionId, counter.sessionId),
+          eq(queueEntries.entryStatus, 'serving'),
+        ),
+      )
+      .limit(1),
+    db
+      .select(cols)
+      .from(queueEntries)
+      .where(
+        and(
+          eq(queueEntries.counterId, counterId),
+          eq(queueEntries.sessionId, counter.sessionId),
+          eq(queueEntries.entryStatus, 'waiting'),
+        ),
+      )
+      .orderBy(asc(queueEntries.sortSeq))
+      .limit(10),
+  ])
+  return {
+    counterName: counter.counterName,
+    isOpen: counter.isOpen,
+    serving: servingRows[0] ?? null,
+    next: nextRows,
   }
 }
