@@ -66,6 +66,8 @@ export function QueueBoard({
         <div className="space-y-5">
           <UpNextList
             upcoming={board.upcoming}
+            waiting={board.waiting}
+            serving={board.serving}
             skipped={board.skipped}
             isPending={isPending}
             onSkip={(id) => run(() => skipEntryAction(token, id))}
