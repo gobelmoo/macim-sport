@@ -12,13 +12,7 @@ import {
   createRegistrationForExistingAthlete,
   insertAthleteConsent,
 } from '@/db/queries/line'
-
-const APP_BASE = (
-  process.env.AUTH_URL ??
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000')
-).replace(/\/$/, '')
+import { APP_BASE } from '@/lib/app-url'
 
 export type QueueContext =
   | { ok: false; reason: 'invalid' | 'closed' }

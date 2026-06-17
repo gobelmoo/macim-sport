@@ -36,7 +36,6 @@ export const PERMISSIONS = {
   // Check-in
   CHECKIN_CREATE: 'checkin:create',
   // Queue
-  QUEUE_MANAGE: 'queue:manage',
   QUEUE_OPERATE: 'queue:operate',
 } as const
 
@@ -55,7 +54,6 @@ const MACIM_MANAGER_PERMS: Permission[] = [
   PERMISSIONS.ATHLETE_VIEW,
   PERMISSIONS.REPORT_VIEW,
   PERMISSIONS.CHECKIN_CREATE,
-  PERMISSIONS.QUEUE_MANAGE,
   PERMISSIONS.QUEUE_OPERATE,
 ]
 

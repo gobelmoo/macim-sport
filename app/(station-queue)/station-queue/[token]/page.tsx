@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation'
 import { getBoard } from '@/db/queries/queue'
 import { signQueueToken, verifyQueueToken } from '@/lib/queue-token'
+import { LIFF_BASE } from '@/lib/app-url'
 import { QueueBoard } from '@/app/(dashboard)/dashboard/events/[id]/queue/[counterId]/board/_components/queue-board'
-
-const LIFF_BASE = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`
 
 export const dynamic = 'force-dynamic'
 

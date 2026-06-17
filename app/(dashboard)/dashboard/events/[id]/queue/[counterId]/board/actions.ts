@@ -17,22 +17,30 @@ import { isValidBib } from '@/lib/line-state'
 
 type Result = { ok: true } | { ok: false; message: string }
 
-async function authorize(
+const DENY: Result = { ok: false, message: 'ไม่มีสิทธิ์' }
+
+/**
+ * Auth context ของ board action ตีความ "token (staff, no-login) หรือ session"
+ * ที่เดียว แล้วคืน revalidate() ที่ผูกกับ path ของโหมดนั้น — คืน null ถ้าไม่มีสิทธิ์.
+ */
+async function resolveBoardCtx(
   eventId: string,
   counterId: string,
   token?: string,
-): Promise<boolean> {
+): Promise<{ revalidate: () => void } | null> {
   if (token) {
     const p = await verifyQueueToken(token, 'operate')
-    return !!p && p.counterId === counterId && p.eventId === eventId
+    if (!p || p.counterId !== counterId || p.eventId !== eventId) return null
+    return { revalidate: () => revalidatePath(`/station-queue/${token}`) }
   }
   const session = await auth()
-  return !!session?.user && canAccess(PERMISSIONS.QUEUE_OPERATE, session.user)
-}
-
-function revalidateBoard(eventId: string, counterId: string, token?: string) {
-  if (token) revalidatePath(`/station-queue/${token}`)
-  else revalidatePath(`/dashboard/events/${eventId}/queue/${counterId}/board`)
+  if (!session?.user || !canAccess(PERMISSIONS.QUEUE_OPERATE, session.user)) {
+    return null
+  }
+  return {
+    revalidate: () =>
+      revalidatePath(`/dashboard/events/${eventId}/queue/${counterId}/board`),
+  }
 }
 
 export async function toggleOpenAction(
@@ -41,10 +49,10 @@ export async function toggleOpenAction(
   isOpen: boolean,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   await setCounterOpen(counterId, isOpen)
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }
 
@@ -53,10 +61,10 @@ export async function resetCounterAction(
   counterId: string,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   await resetCounter(counterId)
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }
 
@@ -65,10 +73,10 @@ export async function nextQueueAction(
   counterId: string,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   await nextQueue(counterId)
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }
 
@@ -78,10 +86,10 @@ export async function skipEntryAction(
   entryId: string,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   await skipEntry(entryId)
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }
 
@@ -91,10 +99,10 @@ export async function requeueEntryAction(
   entryId: string,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   await requeueEntry(entryId)
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }
 
@@ -105,8 +113,8 @@ export async function addByBibAction(
   rawBib: string,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   const bib = rawBib.trim().toUpperCase()
   if (!isValidBib(bib)) return { ok: false, message: 'BIB ไม่ถูกต้อง' }
   const reg = await getRegistrationByBibAndEvent(bib, eventId)
@@ -118,7 +126,7 @@ export async function addByBibAction(
     bibNumber: reg.bibNumber,
     lineUserId: reg.athleteLineUserId,
   })
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }
 
@@ -129,8 +137,8 @@ export async function addNonMemberAction(
   rawLabel: string,
   token?: string,
 ): Promise<Result> {
-  if (!(await authorize(eventId, counterId, token)))
-    return { ok: false, message: 'ไม่มีสิทธิ์' }
+  const ctx = await resolveBoardCtx(eventId, counterId, token)
+  if (!ctx) return DENY
   const label = rawLabel.trim()
   if (!label) return { ok: false, message: 'กรุณาระบุชื่อ/ป้ายกำกับ' }
   await enqueue({
@@ -138,6 +146,6 @@ export async function addNonMemberAction(
     isNonMember: true,
     displayLabel: label,
   })
-  revalidateBoard(eventId, counterId, token)
+  ctx.revalidate()
   return { ok: true }
 }

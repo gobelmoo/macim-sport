@@ -3,16 +3,8 @@ import { auth } from '@/auth'
 import { canAccess, PERMISSIONS } from '@/lib/rbac'
 import { getBoard } from '@/db/queries/queue'
 import { signQueueToken } from '@/lib/queue-token'
+import { APP_BASE, LIFF_BASE } from '@/lib/app-url'
 import { QueueBoard } from './_components/queue-board'
-
-const LIFF_BASE = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`
-
-const APP_BASE = (
-  process.env.AUTH_URL ??
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000')
-).replace(/\/$/, '')
 
 export const dynamic = 'force-dynamic'
 

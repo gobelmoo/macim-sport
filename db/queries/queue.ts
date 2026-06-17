@@ -55,9 +55,17 @@ export type QueueStatus = {
 export async function getOrCreateCounterForStation(
   stationId: string,
 ): Promise<string | null> {
+  // เคสปกติ (หลังครั้งแรก): counter มีอยู่แล้ว → คืนเลย ไม่ต้องดึง station
+  const [existing] = await db
+    .select({ counterId: queueCounters.counterId })
+    .from(queueCounters)
+    .where(eq(queueCounters.stationId, stationId))
+    .limit(1)
+  if (existing) return existing.counterId
+
+  // ครั้งแรก → ต้องดึงข้อมูล station มาสร้าง counter
   const [station] = await db
     .select({
-      stationId: stations.stationId,
       stationName: stations.stationName,
       eventId: stations.eventId,
     })
@@ -65,13 +73,6 @@ export async function getOrCreateCounterForStation(
     .where(eq(stations.stationId, stationId))
     .limit(1)
   if (!station) return null
-
-  const [existing] = await db
-    .select({ counterId: queueCounters.counterId })
-    .from(queueCounters)
-    .where(eq(queueCounters.stationId, stationId))
-    .limit(1)
-  if (existing) return existing.counterId
 
   const [created] = await db
     .insert(queueCounters)
@@ -109,10 +110,6 @@ export async function getCounter(counterId: string): Promise<CounterRow | null> 
     .where(eq(queueCounters.counterId, counterId))
     .limit(1)
   return row ?? null
-}
-
-export async function deleteCounter(counterId: string): Promise<void> {
-  await db.delete(queueCounters).where(eq(queueCounters.counterId, counterId))
 }
 
 export async function setCounterOpen(
@@ -258,19 +255,6 @@ const ENTRY_VIEW_COLUMNS = {
   athleteName: athletes.firstName,
 } as const
 
-function toEntryView(row: {
-  entryId: string
-  displayNumber: number
-  sortSeq: number
-  entryStatus: EntryView['entryStatus']
-  bibNumber: string | null
-  displayLabel: string | null
-  isNonMember: boolean
-  athleteName: string | null
-}): EntryView {
-  return row
-}
-
 async function entriesByStatus(
   counterId: string,
   sessionId: string,
@@ -289,23 +273,21 @@ async function entriesByStatus(
       ),
     )
     .orderBy(asc(queueEntries.sortSeq))
-  const rows = limit ? await q.limit(limit) : await q
-  return rows.map(toEntryView)
+  return limit ? q.limit(limit) : q
 }
 
 export async function getBoard(counterId: string): Promise<BoardData | null> {
   const counter = await getCounter(counterId)
   if (!counter) return null
-  const [servingList, upcoming, skipped, waitingAll] = await Promise.all([
+  const [servingList, waitingAll, skipped] = await Promise.all([
     entriesByStatus(counterId, counter.sessionId, 'serving', 1),
-    entriesByStatus(counterId, counter.sessionId, 'waiting', 3),
-    entriesByStatus(counterId, counter.sessionId, 'skipped'),
     entriesByStatus(counterId, counter.sessionId, 'waiting'),
+    entriesByStatus(counterId, counter.sessionId, 'skipped'),
   ])
   return {
     counter,
     serving: servingList[0] ?? null,
-    upcoming,
+    upcoming: waitingAll.slice(0, 3),
     skipped,
     waitingCount: waitingAll.length,
   }
@@ -316,21 +298,35 @@ export async function nextQueue(counterId: string): Promise<void> {
   const counter = await getCounter(counterId)
   if (!counter) return
 
-  // ปิด serving ปัจจุบัน
-  const [serving] = await db
-    .select({
-      entryId: queueEntries.entryId,
-      calledAt: queueEntries.calledAt,
-    })
-    .from(queueEntries)
-    .where(
-      and(
-        eq(queueEntries.counterId, counterId),
-        eq(queueEntries.sessionId, counter.sessionId),
-        eq(queueEntries.entryStatus, 'serving'),
-      ),
-    )
-    .limit(1)
+  // อ่าน serving ปัจจุบัน + waiting ตัวถัดไปพร้อมกัน (อิสระต่อกัน คนละสถานะ)
+  const [[serving], [next]] = await Promise.all([
+    db
+      .select({
+        entryId: queueEntries.entryId,
+        calledAt: queueEntries.calledAt,
+      })
+      .from(queueEntries)
+      .where(
+        and(
+          eq(queueEntries.counterId, counterId),
+          eq(queueEntries.sessionId, counter.sessionId),
+          eq(queueEntries.entryStatus, 'serving'),
+        ),
+      )
+      .limit(1),
+    db
+      .select({ entryId: queueEntries.entryId })
+      .from(queueEntries)
+      .where(
+        and(
+          eq(queueEntries.counterId, counterId),
+          eq(queueEntries.sessionId, counter.sessionId),
+          eq(queueEntries.entryStatus, 'waiting'),
+        ),
+      )
+      .orderBy(asc(queueEntries.sortSeq))
+      .limit(1),
+  ])
 
   if (serving) {
     const now = new Date()
@@ -348,20 +344,7 @@ export async function nextQueue(counterId: string): Promise<void> {
     }
   }
 
-  // เรียก waiting ตัวแรก (sortSeq น้อยสุด)
-  const [next] = await db
-    .select({ entryId: queueEntries.entryId })
-    .from(queueEntries)
-    .where(
-      and(
-        eq(queueEntries.counterId, counterId),
-        eq(queueEntries.sessionId, counter.sessionId),
-        eq(queueEntries.entryStatus, 'waiting'),
-      ),
-    )
-    .orderBy(asc(queueEntries.sortSeq))
-    .limit(1)
-
+  // เรียก waiting ตัวแรก (sortSeq น้อยสุด — อ่านไว้แล้วด้านบน)
   if (next) {
     await db
       .update(queueEntries)
@@ -389,30 +372,32 @@ export async function requeueEntry(entryId: string): Promise<void> {
     .limit(1)
   if (!entry) return
 
-  const [serving] = await db
-    .select({ sortSeq: queueEntries.sortSeq })
-    .from(queueEntries)
-    .where(
-      and(
-        eq(queueEntries.counterId, entry.counterId),
-        eq(queueEntries.sessionId, entry.sessionId),
-        eq(queueEntries.entryStatus, 'serving'),
-      ),
-    )
-    .limit(1)
-
-  const [minWaiting] = await db
-    .select({ sortSeq: queueEntries.sortSeq })
-    .from(queueEntries)
-    .where(
-      and(
-        eq(queueEntries.counterId, entry.counterId),
-        eq(queueEntries.sessionId, entry.sessionId),
-        eq(queueEntries.entryStatus, 'waiting'),
-      ),
-    )
-    .orderBy(asc(queueEntries.sortSeq))
-    .limit(1)
+  // อ่าน serving + waiting ตัวแรกพร้อมกัน (อิสระต่อกัน)
+  const [[serving], [minWaiting]] = await Promise.all([
+    db
+      .select({ sortSeq: queueEntries.sortSeq })
+      .from(queueEntries)
+      .where(
+        and(
+          eq(queueEntries.counterId, entry.counterId),
+          eq(queueEntries.sessionId, entry.sessionId),
+          eq(queueEntries.entryStatus, 'serving'),
+        ),
+      )
+      .limit(1),
+    db
+      .select({ sortSeq: queueEntries.sortSeq })
+      .from(queueEntries)
+      .where(
+        and(
+          eq(queueEntries.counterId, entry.counterId),
+          eq(queueEntries.sessionId, entry.sessionId),
+          eq(queueEntries.entryStatus, 'waiting'),
+        ),
+      )
+      .orderBy(asc(queueEntries.sortSeq))
+      .limit(1),
+  ])
 
   const newSeq = requeueSortSeq(
     serving?.sortSeq ?? null,
@@ -436,20 +421,24 @@ export async function getQueueStatus(
       displayNumber: queueEntries.displayNumber,
       sortSeq: queueEntries.sortSeq,
       entryStatus: queueEntries.entryStatus,
+      counterName: queueCounters.counterName,
+      counterSessionId: queueCounters.sessionId,
+      avgServiceSeconds: queueCounters.avgServiceSeconds,
     })
     .from(queueEntries)
+    .innerJoin(
+      queueCounters,
+      eq(queueEntries.counterId, queueCounters.counterId),
+    )
     .where(eq(queueEntries.statusToken, statusToken))
     .limit(1)
   if (!entry) return null
 
-  const counter = await getCounter(entry.counterId)
-  if (!counter) return null
-
-  const sessionValid = entry.sessionId === counter.sessionId
+  const sessionValid = entry.sessionId === entry.counterSessionId
 
   if (!sessionValid || entry.entryStatus !== 'waiting') {
     return {
-      counterName: counter.counterName,
+      counterName: entry.counterName,
       displayNumber: entry.displayNumber,
       entryStatus: entry.entryStatus,
       peopleAhead: 0,
@@ -472,11 +461,11 @@ export async function getQueueStatus(
   const peopleAhead = ahead?.count ?? 0
 
   return {
-    counterName: counter.counterName,
+    counterName: entry.counterName,
     displayNumber: entry.displayNumber,
     entryStatus: entry.entryStatus,
     peopleAhead,
-    etaSeconds: estimateWaitSeconds(peopleAhead, counter.avgServiceSeconds),
+    etaSeconds: estimateWaitSeconds(peopleAhead, entry.avgServiceSeconds),
     sessionValid,
   }
 }
