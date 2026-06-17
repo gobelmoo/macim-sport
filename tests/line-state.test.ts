@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { isValidBib, resolveFallbackText, resolveSettingsToSave, shouldAutoReply } from '@/lib/line-state'
+import {
+  isValidBib,
+  resolveFallbackText,
+  resolveNoEventsText,
+  resolveSettingsToSave,
+  shouldAutoReply,
+} from '@/lib/line-state'
 
 describe('isValidBib', () => {
   it.each([
@@ -30,6 +36,18 @@ describe('resolveFallbackText', () => {
   })
   it('trim ช่องว่างหัวท้าย', () => {
     expect(resolveFallbackText({ fallbackEnabled: true, fallbackMessage: ' hi ' })).toBe('hi')
+  })
+})
+
+describe('resolveNoEventsText', () => {
+  it('คืนข้อความที่ตั้งไว้ (ไม่ผูกกับสวิตช์ fallback — type ไม่รับ fallbackEnabled)', () => {
+    expect(resolveNoEventsText({ fallbackMessage: 'no events' })).toBe('no events')
+  })
+  it('trim ช่องว่างหัวท้าย', () => {
+    expect(resolveNoEventsText({ fallbackMessage: ' hi ' })).toBe('hi')
+  })
+  it('คืนข้อความ default เมื่อข้อความว่าง/มีแต่ช่องว่าง', () => {
+    expect(resolveNoEventsText({ fallbackMessage: '   ' }).length).toBeGreaterThan(0)
   })
 })
 
