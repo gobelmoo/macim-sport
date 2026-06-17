@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import { getBoard } from '@/db/queries/queue'
 import { signQueueToken, verifyQueueToken } from '@/lib/queue-token'
-import { LIFF_BASE } from '@/lib/app-url'
-import { QueueBoard } from '@/app/(dashboard)/dashboard/events/[id]/queue/[counterId]/board/_components/queue-board'
+import { APP_BASE, LIFF_BASE } from '@/lib/app-url'
+import { QueueBoard } from './_components/queue-board'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,21 +18,14 @@ export default async function StationQueuePage({ params }: Props) {
   const board = await getBoard(payload.counterId)
   if (!board || board.counter.eventId !== payload.eventId) notFound()
 
-  // QR ให้นักกีฬา (scope request) แสดงบนหน้า staff ด้วย
   const liffUrl = `${LIFF_BASE}/queue/${await signQueueToken({
     counterId: payload.counterId,
     eventId: payload.eventId,
     scope: 'request',
   })}`
+  const shareUrl = `${APP_BASE}/station-queue/${token}`
 
   return (
-    <main className="mx-auto max-w-3xl">
-      <QueueBoard
-        eventId={payload.eventId}
-        board={board}
-        liffUrl={liffUrl}
-        token={token}
-      />
-    </main>
+    <QueueBoard board={board} token={token} liffUrl={liffUrl} shareUrl={shareUrl} />
   )
 }
