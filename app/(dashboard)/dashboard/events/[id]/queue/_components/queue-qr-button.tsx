@@ -14,9 +14,16 @@ import {
 interface Props {
   counterName: string
   liffUrl: string
+  triggerLabel?: string
+  description?: string
 }
 
-export function QueueQrButton({ counterName, liffUrl }: Props) {
+export function QueueQrButton({
+  counterName,
+  liffUrl,
+  triggerLabel = 'QR Code',
+  description = 'นักกีฬาสแกน QR เพื่อรับคิว',
+}: Props) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -33,13 +40,13 @@ export function QueueQrButton({ counterName, liffUrl }: Props) {
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        QR Code
+        {triggerLabel}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{counterName}</DialogTitle>
-            <DialogDescription>นักกีฬาสแกน QR เพื่อรับคิว</DialogDescription>
+            <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <div className="flex justify-center py-2">
             <QRCodeSVG value={liffUrl} size={220} level="M" />

@@ -28,10 +28,16 @@ export function QueueBoard({
   eventId,
   board,
   liffUrl,
+  token,
+  operatorUrl,
 }: {
   eventId: string
   board: BoardData
   liffUrl: string
+  /** operate token — undefined = dashboard/session mode */
+  token?: string
+  /** ลิงก์หน้าคุมคิว staff (โชว์เฉพาะ dashboard) */
+  operatorUrl?: string
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -64,12 +70,20 @@ export function QueueBoard({
         </div>
         <div className="flex items-center gap-2">
           <QueueQrButton counterName={board.counter.counterName} liffUrl={liffUrl} />
+          {operatorUrl && (
+            <QueueQrButton
+              counterName={board.counter.counterName}
+              liffUrl={operatorUrl}
+              triggerLabel="หน้าจอ Staff"
+              description="เปิดหน้าคุมคิวบนอุปกรณ์ staff (ไม่ต้องล็อกอิน)"
+            />
+          )}
           <Button
             variant={board.counter.isOpen ? 'outline' : 'default'}
             disabled={isPending}
             onClick={() =>
               run(() =>
-                toggleOpenAction(eventId, counterId, !board.counter.isOpen),
+                toggleOpenAction(eventId, counterId, !board.counter.isOpen, token),
               )
             }
           >
@@ -83,7 +97,7 @@ export function QueueBoard({
             actionLabel="ยืนยันรีเซ็ต"
             triggerVariant="destructive"
             onConfirm={async () => {
-              const r = await resetCounterAction(eventId, counterId)
+              const r = await resetCounterAction(eventId, counterId, token)
               router.refresh()
               if (!r.ok) return { message: r.message }
             }}
@@ -108,7 +122,7 @@ export function QueueBoard({
                 disabled={isPending}
                 onClick={() =>
                   run(() =>
-                    skipEntryAction(eventId, counterId, board.serving!.entryId),
+                    skipEntryAction(eventId, counterId, board.serving!.entryId, token),
                   )
                 }
               >
@@ -122,7 +136,7 @@ export function QueueBoard({
         <Button
           className="mt-3 w-full"
           disabled={isPending}
-          onClick={() => run(() => nextQueueAction(eventId, counterId))}
+          onClick={() => run(() => nextQueueAction(eventId, counterId, token))}
         >
           เรียกคิวถัดไป →
         </Button>
@@ -149,7 +163,7 @@ export function QueueBoard({
                 size="sm"
                 disabled={isPending}
                 onClick={() =>
-                  run(() => skipEntryAction(eventId, counterId, e.entryId))
+                  run(() => skipEntryAction(eventId, counterId, e.entryId, token))
                 }
               >
                 ข้าม
@@ -178,7 +192,7 @@ export function QueueBoard({
                   size="sm"
                   disabled={isPending}
                   onClick={() =>
-                    run(() => requeueEntryAction(eventId, counterId, e.entryId))
+                    run(() => requeueEntryAction(eventId, counterId, e.entryId, token))
                   }
                 >
                   แทรกเป็นคิวถัดไป
@@ -204,7 +218,7 @@ export function QueueBoard({
             disabled={isPending || !bib.trim()}
             onClick={() =>
               run(async () => {
-                const r = await addByBibAction(eventId, counterId, bib)
+                const r = await addByBibAction(eventId, counterId, bib, token)
                 if (r.ok) setBib('')
                 else alert(r.message)
               })
@@ -225,7 +239,7 @@ export function QueueBoard({
             disabled={isPending || !guest.trim()}
             onClick={() =>
               run(async () => {
-                const r = await addNonMemberAction(eventId, counterId, guest)
+                const r = await addNonMemberAction(eventId, counterId, guest, token)
                 if (r.ok) setGuest('')
                 else alert(r.message)
               })
