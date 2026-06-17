@@ -7,6 +7,13 @@ import { QueueBoard } from './_components/queue-board'
 
 const LIFF_BASE = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`
 
+const APP_BASE = (
+  process.env.AUTH_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000')
+).replace(/\/$/, '')
+
 export const dynamic = 'force-dynamic'
 
 interface Props {
@@ -23,7 +30,16 @@ export default async function BoardPage({ params }: Props) {
   if (!board || board.counter.eventId !== eventId) notFound()
 
   // QR ให้นักกีฬาสแกนรับคิว (counter ผูก station อยู่แล้ว)
-  const liffUrl = `${LIFF_BASE}/queue/${await signQueueToken({ counterId, eventId })}`
+  const liffUrl = `${LIFF_BASE}/queue/${await signQueueToken({ counterId, eventId, scope: 'request' })}`
+  // ลิงก์หน้าคุมคิว staff แบบ standalone (ไม่ต้องล็อกอิน)
+  const operatorUrl = `${APP_BASE}/station-queue/${await signQueueToken({ counterId, eventId, scope: 'operate' })}`
 
-  return <QueueBoard eventId={eventId} board={board} liffUrl={liffUrl} />
+  return (
+    <QueueBoard
+      eventId={eventId}
+      board={board}
+      liffUrl={liffUrl}
+      operatorUrl={operatorUrl}
+    />
+  )
 }
