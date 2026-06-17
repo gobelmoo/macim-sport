@@ -22,6 +22,10 @@ export function isValidBib(bib: string): boolean {
   return /^[A-Za-z0-9\-]{1,10}$/.test(bib)
 }
 
+export function shouldAutoReply(settings: { autoReplyEnabled: boolean }): boolean {
+  return settings.autoReplyEnabled
+}
+
 export function resolveFallbackText(settings: {
   fallbackEnabled: boolean
   fallbackMessage: string
