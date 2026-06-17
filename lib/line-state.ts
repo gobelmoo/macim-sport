@@ -35,6 +35,22 @@ export function resolveFallbackText(settings: {
   return text.length > 0 ? text : null
 }
 
+export function resolveSettingsToSave(
+  input: {
+    autoReplyEnabled: boolean
+    fallbackPresent: boolean
+    fallbackEnabled: boolean
+    fallbackMessage: string
+  },
+  current: { fallbackEnabled: boolean; fallbackMessage: string },
+): { autoReplyEnabled: boolean; fallbackEnabled: boolean; fallbackMessage: string } {
+  return {
+    autoReplyEnabled: input.autoReplyEnabled,
+    fallbackEnabled: input.fallbackPresent ? input.fallbackEnabled : current.fallbackEnabled,
+    fallbackMessage: input.fallbackPresent ? input.fallbackMessage : current.fallbackMessage,
+  }
+}
+
 async function replyFallback(replyToken: string): Promise<void> {
   try {
     const settings = await getLineSettings()
