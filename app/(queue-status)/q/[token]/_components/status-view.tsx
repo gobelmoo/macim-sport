@@ -61,7 +61,12 @@ export function StatusView({ token }: { token: string }) {
   return (
     <div className="space-y-4 p-6 text-center">
       <p className="text-sm text-muted-foreground">{data.counterName}</p>
-      <p className="text-6xl font-bold text-primary">{data.displayNumber}</p>
+      <div>
+        <p className="text-6xl font-bold text-primary">{data.displayNumber}</p>
+        {data.bibNumber && (
+          <p className="mt-1 text-sm text-muted-foreground">BIB {data.bibNumber}</p>
+        )}
+      </div>
       <p className="text-base font-medium">{statusText[data.entryStatus]}</p>
       {data.entryStatus === 'waiting' && (
         <div className="rounded-xl border p-4">

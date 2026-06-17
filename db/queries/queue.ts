@@ -41,6 +41,7 @@ export type BoardData = {
 export type QueueStatus = {
   counterName: string
   displayNumber: number
+  bibNumber: string | null
   entryStatus: EntryView['entryStatus']
   peopleAhead: number
   etaSeconds: number
@@ -421,6 +422,7 @@ export async function getQueueStatus(
       counterId: queueEntries.counterId,
       sessionId: queueEntries.sessionId,
       displayNumber: queueEntries.displayNumber,
+      bibNumber: queueEntries.bibNumber,
       sortSeq: queueEntries.sortSeq,
       entryStatus: queueEntries.entryStatus,
       counterName: queueCounters.counterName,
@@ -442,6 +444,7 @@ export async function getQueueStatus(
     return {
       counterName: entry.counterName,
       displayNumber: entry.displayNumber,
+      bibNumber: entry.bibNumber,
       entryStatus: entry.entryStatus,
       peopleAhead: 0,
       etaSeconds: 0,
@@ -465,6 +468,7 @@ export async function getQueueStatus(
   return {
     counterName: entry.counterName,
     displayNumber: entry.displayNumber,
+    bibNumber: entry.bibNumber,
     entryStatus: entry.entryStatus,
     peopleAhead,
     etaSeconds: estimateWaitSeconds(peopleAhead, entry.avgServiceSeconds),
