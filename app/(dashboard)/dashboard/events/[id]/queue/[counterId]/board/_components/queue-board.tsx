@@ -8,8 +8,7 @@ import { ConfirmActionButton } from '@/app/_components/confirm-action-button'
 import { QueueQrButton } from '../../../_components/queue-qr-button'
 import type { BoardData, EntryView } from '@/db/queries/queue'
 import {
-  addByBibAction,
-  addNonMemberAction,
+  addQueueAction,
   nextQueueAction,
   requeueEntryAction,
   resetCounterAction,
@@ -41,8 +40,8 @@ export function QueueBoard({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [bib, setBib] = useState('')
-  const [guest, setGuest] = useState('')
+  const [addInput, setAddInput] = useState('')
+  const [addMsg, setAddMsg] = useState<string | null>(null)
   const counterId = board.counter.counterId
 
   // auto-refresh ทุก 7 วิ เพื่อเห็นคิวที่ขอเข้ามาใหม่
@@ -55,6 +54,19 @@ export function QueueBoard({
     startTransition(async () => {
       await fn()
       router.refresh()
+    })
+  }
+
+  function submitAdd() {
+    run(async () => {
+      const r = await addQueueAction(eventId, counterId, addInput, token)
+      if (r.ok) {
+        setAddInput('')
+        setAddMsg(r.message)
+      } else {
+        setAddMsg(null)
+        alert(r.message)
+      }
     })
   }
 
@@ -203,54 +215,35 @@ export function QueueBoard({
         </div>
       )}
 
-      {/* เพิ่มคิวด้วยตนเอง */}
+      {/* เพิ่มคิวด้วยตนเอง — ช่องเดียว: BIB หรือ ชื่อ */}
       <div className="space-y-3 rounded-xl border p-4">
         <p className="text-sm font-medium">เพิ่มคิวแทนนักกีฬา</p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
-            value={bib}
-            onChange={(e) => setBib(e.target.value)}
-            placeholder="BIB (ลงทะเบียนแล้ว)"
-            className="sm:max-w-[200px]"
+            value={addInput}
+            onChange={(e) => setAddInput(e.target.value)}
+            placeholder="BIB หรือ ชื่อนักกีฬา"
+            className="sm:max-w-[260px]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && addInput.trim() && !isPending) {
+                e.currentTarget.blur()
+                submitAdd()
+              }
+            }}
           />
           <Button
             variant="secondary"
-            disabled={isPending || !bib.trim()}
-            onClick={() =>
-              run(async () => {
-                const r = await addByBibAction(eventId, counterId, bib, token)
-                if (r.ok) setBib('')
-                else alert(r.message)
-              })
-            }
+            disabled={isPending || !addInput.trim()}
+            onClick={submitAdd}
           >
-            เพิ่มด้วย BIB
+            เพิ่มคิว
           </Button>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            value={guest}
-            onChange={(e) => setGuest(e.target.value)}
-            placeholder="ชื่อ/ป้ายกำกับ (ไม่ใช่สมาชิก)"
-            className="sm:max-w-[200px]"
-          />
-          <Button
-            variant="secondary"
-            disabled={isPending || !guest.trim()}
-            onClick={() =>
-              run(async () => {
-                const r = await addNonMemberAction(eventId, counterId, guest, token)
-                if (r.ok) setGuest('')
-                else alert(r.message)
-              })
-            }
-          >
-            เพิ่ม (ไม่ใช่สมาชิก)
-          </Button>
-        </div>
+        {addMsg && <p className="text-sm text-green-600">{addMsg}</p>}
         <p className="text-xs text-muted-foreground">
-          หมายเหตุ: คิวที่เพิ่มเองไม่มี LINE จึงไม่ได้รับ flex แจ้งเลขคิว
-          กรุณาแจ้งเลขคิวกับนักกีฬาโดยตรง
+          กรอก BIB ที่ลงทะเบียนแล้ว → ผูกนักกีฬาคนนั้น · กรอกชื่อหรือ BIB
+          ที่ยังไม่ลงทะเบียน → เพิ่มเป็น “ไม่ใช่สมาชิก”. หมายเหตุ:
+          คิวที่เพิ่มเองไม่มี LINE จึงไม่ได้รับ flex แจ้งเลขคิว กรุณาแจ้งเลขคิวเอง
         </p>
       </div>
     </div>

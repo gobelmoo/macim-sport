@@ -17,7 +17,7 @@ import { isValidBib } from '@/lib/line-state'
 
 type Result = { ok: true } | { ok: false; message: string }
 
-const DENY: Result = { ok: false, message: 'ไม่มีสิทธิ์' }
+const DENY = { ok: false, message: 'ไม่มีสิทธิ์' } as const
 
 /**
  * Auth context ของ board action ตีความ "token (staff, no-login) หรือ session"
@@ -106,46 +106,63 @@ export async function requeueEntryAction(
   return { ok: true }
 }
 
-/** เพิ่มคิวแทนนักกีฬาด้วย BIB (ต้องลงทะเบียน event แล้ว) */
-export async function addByBibAction(
-  eventId: string,
-  counterId: string,
-  rawBib: string,
-  token?: string,
-): Promise<Result> {
-  const ctx = await resolveBoardCtx(eventId, counterId, token)
-  if (!ctx) return DENY
-  const bib = rawBib.trim().toUpperCase()
-  if (!isValidBib(bib)) return { ok: false, message: 'BIB ไม่ถูกต้อง' }
-  const reg = await getRegistrationByBibAndEvent(bib, eventId)
-  if (!reg) return { ok: false, message: 'ไม่พบ BIB นี้ในงาน' }
-  await enqueue({
-    counterId,
-    athleteId: reg.athleteId,
-    registrationId: reg.registrationId,
-    bibNumber: reg.bibNumber,
-    lineUserId: reg.athleteLineUserId,
-  })
-  ctx.revalidate()
-  return { ok: true }
-}
+type AddResult =
+  | { ok: true; message: string }
+  | { ok: false; message: string }
 
-/** เพิ่มคิวให้คนที่ไม่ใช่ member / ไม่ได้ลงทะเบียน */
-export async function addNonMemberAction(
+/**
+ * เพิ่มคิวแทนนักกีฬาด้วย input เดียว (BIB หรือ ชื่อ).
+ * ถ้า input เป็นรูปแบบ BIB และเจอ registration ในงาน → ผูกนักกีฬาคนนั้น
+ * มิฉะนั้น → เพิ่มเป็น non-member โดยใช้ input เป็นป้ายกำกับ.
+ */
+export async function addQueueAction(
   eventId: string,
   counterId: string,
-  rawLabel: string,
+  rawInput: string,
   token?: string,
-): Promise<Result> {
+): Promise<AddResult> {
   const ctx = await resolveBoardCtx(eventId, counterId, token)
   if (!ctx) return DENY
-  const label = rawLabel.trim()
-  if (!label) return { ok: false, message: 'กรุณาระบุชื่อ/ป้ายกำกับ' }
-  await enqueue({
+  const input = rawInput.trim()
+  if (!input) return { ok: false, message: 'กรุณากรอก BIB หรือ ชื่อ' }
+
+  // รูปแบบเป็น BIB → ลอง lookup registration ในงาน
+  const bib = input.toUpperCase()
+  if (isValidBib(bib)) {
+    const reg = await getRegistrationByBibAndEvent(bib, eventId)
+    if (reg) {
+      const { entry, created } = await enqueue({
+        counterId,
+        athleteId: reg.athleteId,
+        registrationId: reg.registrationId,
+        bibNumber: reg.bibNumber,
+        lineUserId: reg.athleteLineUserId,
+      })
+      ctx.revalidate()
+      const name = [reg.athleteFirstName, reg.athleteLastName]
+        .filter(Boolean)
+        .join(' ')
+      const who = `${name || 'นักกีฬา'} (BIB ${reg.bibNumber})`
+      return {
+        ok: true,
+        message: created
+          ? `เพิ่มคิว #${entry.displayNumber} — ${who}`
+          : `${who} อยู่ในคิวแล้ว (หมายเลข #${entry.displayNumber})`,
+      }
+    }
+  }
+
+  // ไม่ใช่ bib ที่ลงทะเบียน → non-member (ใช้ input เป็นป้ายกำกับ)
+  const { entry, created } = await enqueue({
     counterId,
     isNonMember: true,
-    displayLabel: label,
+    displayLabel: input,
   })
   ctx.revalidate()
-  return { ok: true }
+  return {
+    ok: true,
+    message: created
+      ? `เพิ่มคิว #${entry.displayNumber} — ${input} (ไม่ใช่สมาชิก)`
+      : `${input} อยู่ในคิวแล้ว (หมายเลข #${entry.displayNumber})`,
+  }
 }
