@@ -4,15 +4,20 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { EntryView } from '@/db/queries/queue'
 import { entryLabel } from './entry-label'
+import { AllQueuesDialog } from './all-queues-dialog'
 
 export function UpNextList({
   upcoming,
+  waiting,
+  serving,
   skipped,
   isPending,
   onSkip,
   onRequeue,
 }: {
   upcoming: EntryView[]
+  waiting: EntryView[]
+  serving: EntryView | null
   skipped: EntryView[]
   isPending: boolean
   onSkip: (id: string) => void
@@ -21,7 +26,10 @@ export function UpNextList({
   const [showSkipped, setShowSkipped] = useState(false)
   return (
     <div className="rounded-2xl border bg-card p-4">
-      <p className="mb-3 text-sm font-medium">คิวถัดไป</p>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm font-medium">คิวถัดไป</p>
+        <AllQueuesDialog serving={serving} waiting={waiting} skipped={skipped} />
+      </div>
       <ul className="space-y-2">
         {upcoming.length === 0 && (
           <li className="text-sm text-muted-foreground">— ไม่มีคิวรอ —</li>

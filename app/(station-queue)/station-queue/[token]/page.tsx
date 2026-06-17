@@ -24,8 +24,19 @@ export default async function StationQueuePage({ params }: Props) {
     scope: 'request',
   })}`
   const shareUrl = `${APP_BASE}/station-queue/${token}`
+  const displayUrl = `${APP_BASE}/queue-display/${await signQueueToken({
+    counterId: payload.counterId,
+    eventId: payload.eventId,
+    scope: 'display',
+  })}`
 
   return (
-    <QueueBoard board={board} token={token} liffUrl={liffUrl} shareUrl={shareUrl} />
+    <QueueBoard
+      board={board}
+      token={token}
+      liffUrl={liffUrl}
+      shareUrl={shareUrl}
+      displayUrl={displayUrl}
+    />
   )
 }

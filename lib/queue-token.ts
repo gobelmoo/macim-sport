@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose'
 
-export type QueueTokenScope = 'request' | 'operate'
+export type QueueTokenScope = 'request' | 'operate' | 'display'
 
 export interface QueueTokenPayload extends JWTPayload {
   counterId: string

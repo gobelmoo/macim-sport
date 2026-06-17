@@ -9,12 +9,14 @@ export function BoardHeader({
   isPending,
   liffUrl,
   shareUrl,
+  displayUrl,
   onToggleOpen,
 }: {
   board: BoardData
   isPending: boolean
   liffUrl: string
   shareUrl: string
+  displayUrl: string
   onToggleOpen: () => void
 }) {
   const open = board.counter.isOpen
@@ -50,6 +52,7 @@ export function BoardHeader({
           counterName={board.counter.counterName}
           liffUrl={liffUrl}
           shareUrl={shareUrl}
+          displayUrl={displayUrl}
         />
       </div>
     </div>
