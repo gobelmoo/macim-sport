@@ -2,7 +2,10 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { canAccess, PERMISSIONS } from '@/lib/rbac'
 import { getBoard } from '@/db/queries/queue'
+import { signQueueToken } from '@/lib/queue-token'
 import { QueueBoard } from './_components/queue-board'
+
+const LIFF_BASE = `https://liff.line.me/${process.env.NEXT_PUBLIC_LIFF_ID}`
 
 export const dynamic = 'force-dynamic'
 
@@ -19,5 +22,8 @@ export default async function BoardPage({ params }: Props) {
   const board = await getBoard(counterId)
   if (!board || board.counter.eventId !== eventId) notFound()
 
-  return <QueueBoard eventId={eventId} board={board} />
+  // QR ให้นักกีฬาสแกนรับคิว (counter ผูก station อยู่แล้ว)
+  const liffUrl = `${LIFF_BASE}/queue/${await signQueueToken({ counterId, eventId })}`
+
+  return <QueueBoard eventId={eventId} board={board} liffUrl={liffUrl} />
 }
